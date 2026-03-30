@@ -17,7 +17,7 @@ export function ModeToggle({ mode, onChange }: Props) {
   return (
     <LayoutGroup id="tone-modes">
       <div
-        className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-1 backdrop-blur-md"
+        className="grid grid-cols-2 gap-1 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-1 backdrop-blur-md touch-manipulation"
         role="tablist"
         aria-label="Tuner mode"
       >
@@ -30,7 +30,7 @@ export function ModeToggle({ mode, onChange }: Props) {
               role="tab"
               aria-selected={selected}
               onClick={() => onChange(m.id)}
-              className="relative rounded-md px-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 sm:py-2.5"
+              className="relative min-h-[48px] rounded-md px-3 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 sm:min-h-0 sm:py-2.5"
             >
               {selected ? (
                 <motion.span

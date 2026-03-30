@@ -245,7 +245,7 @@ export function PresetSelector({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.99 }}
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-x-3 top-24 z-50 flex max-h-[min(72vh,560px)] flex-col overflow-hidden rounded-2xl border border-zinc-700/90 bg-zinc-950/95 shadow-2xl shadow-black/50 backdrop-blur-xl md:absolute md:inset-x-0 md:top-full md:mt-2 md:max-h-[min(480px,58vh)]"
+              className="fixed inset-x-3 z-50 flex max-h-[min(72vh,560px)] flex-col overflow-hidden rounded-2xl border border-zinc-700/90 bg-zinc-950/95 shadow-2xl shadow-black/50 backdrop-blur-xl top-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.25rem))] md:absolute md:inset-x-0 md:top-full md:mt-2 md:max-h-[min(480px,58vh)]"
             >
               <div className="border-b border-zinc-800/90 p-3">
                 <label className="sr-only" htmlFor={`${listId}-search`}>

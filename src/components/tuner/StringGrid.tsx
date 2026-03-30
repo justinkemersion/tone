@@ -45,7 +45,7 @@ export function StringGrid({
     <motion.ul
       key={tuningKey}
       layout
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3"
+      className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-6"
       variants={listVariants}
       initial="hidden"
       animate="show"
@@ -65,7 +65,7 @@ export function StringGrid({
               whileTap={interactive ? { scale: 0.985 } : undefined}
               transition={{ type: "spring", stiffness: 520, damping: 38 }}
               onClick={() => onStringPress(s.stringIndex)}
-              className={`flex w-full min-h-[4.5rem] flex-col items-start justify-between rounded-xl border px-4 py-3 text-left transition-colors md:min-h-[5.5rem] md:px-4 md:py-4 ${
+              className={`touch-manipulation flex w-full min-h-[3.5rem] flex-col items-start justify-between rounded-xl border px-3 py-2.5 text-left transition-colors active:opacity-95 sm:min-h-[4.5rem] sm:px-4 sm:py-3 md:min-h-[5.5rem] md:py-4 ${
                 !interactive
                   ? "cursor-default border-zinc-800/60 bg-zinc-900/25 opacity-70"
                   : active

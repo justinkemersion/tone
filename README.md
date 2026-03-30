@@ -87,7 +87,39 @@ Open [http://localhost:3000](http://localhost:3000). **Microphone access** needs
 npm run build   # production build
 npm run start   # production server
 npm run lint    # ESLint
+npm test           # Vitest (watch)
+npm run test:run   # Vitest once (CI-friendly)
 ```
+
+---
+
+## Tests (Vitest + Testing Library)
+
+Automated tests live next to source as `*.test.ts` / `*.test.tsx`. **`npm run test:run`** executes the full suite.
+
+### Covered today
+
+| Area | What it checks |
+|------|----------------|
+| **`lib/audio/note-utils`** | Note parsing (incl. flats), `midiToHz` / `noteToHz`, cents, chromatic pitch mapping |
+| **`lib/audio/pitch-detection`** | `AutocorrPitchDetector`: short/silent buffers → `null`; synthetic sines ~440 Hz and ~82 Hz |
+| **`lib/tuning/tuning-engine`** | Open-string targets, string indices (6 → 1), custom reference Hz |
+| **`lib/tuning/tunings`** | `getTuningById`, `DEFAULT_TUNING_ID`, search filter, category grouping |
+| **`lib/tuning/tuning-library`** | `resolveOpenStrings`, `REFERENCE_A4_HZ` |
+| **`useFavoriteTunings`** | `localStorage` hydration, toggle + persist, corrupt JSON ignored |
+| **`useTunerContext`** | Throws if used outside `TunerProvider` |
+| **`ModeToggle`** | Tab clicks invoke `onChange` with the right mode |
+| **`StringGrid`** | String tap in Reference mode; disabled / no handler in Listen mode |
+
+Framer Motion is stubbed in `vitest.setup.ts` so component tests stay deterministic.
+
+### Not covered yet (TODO)
+
+- [ ] **`useTuner`** — mic stream, `AnalyserNode` loop, integration with pitch detector (needs `getUserMedia` / `AudioContext` mocks or a thin test harness).
+- [ ] **`useReferenceTone`** — oscillator output, envelopes, suspend/dispose (Web Audio mocks).
+- [ ] **`TunerProvider` / `TunerContext`** — mode transitions, reference cycle timing, `muteAll` wiring (mock child hooks and assert orchestration).
+- [ ] **`PresetSelector` / `TunerApp`** — search, favorites UI, responsive sheet (optional Playwright or heavier RTL).
+- [ ] **E2E** — real browser smoke on iOS Safari / Chrome (mic permission, safe areas).
 
 ---
 
@@ -115,7 +147,7 @@ npm run lint    # ESLint
 - [ ] **Input level meter** — RMS from the time-domain buffer.  
 - [ ] **PWA** — Installable, phone-on-stand workflow.  
 - [ ] **Accessibility** — Arc semantics, reduced-motion variants for Framer.  
-- [ ] **Tests** — `note-utils`, pitch detector edge cases, preset → Hz resolution.  
+- [ ] **More tests** — See **Tests** section above for gaps (`useTuner`, `useReferenceTone`, full context, E2E).  
 
 ---
 
