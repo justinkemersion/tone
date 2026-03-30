@@ -90,6 +90,35 @@ export const TUNING_PRESETS: readonly TuningPreset[] = [
     subtitle: "Led Zeppelin",
     notes: ["D2", "A2", "D3", "G3", "A3", "D4"],
   },
+  {
+    id: "song-holocene",
+    name: "Holocene",
+    category: "song",
+    subtitle: "Bon Iver · Open Bb",
+    notes: ["Bb1", "F2", "Bb2", "D3", "F3", "Bb3"],
+  },
+  {
+    id: "song-venus-in-furs",
+    name: "Venus in Furs",
+    category: "song",
+    subtitle: "The Velvet Underground · Ostrich Tuning",
+    notes: ["D2", "D2", "D3", "D3", "D4", "D4"],
+  },
+  {
+    id: "song-schizophrenia",
+    name: "Schizophrenia",
+    category: "song",
+    subtitle: "Sonic Youth · (For that dissonant, chiming drone)",
+    notes: ["F#2", "F#2", "B2", "B2", "C#3", "C#3"],
+  },
+  {
+    id: "song-skinny-love",
+    name: "Skinny Love",
+    category: "song",
+    subtitle:
+      "Bon Iver · Open C (similar to Nick Drake’s Pink Moon but distinct voicing)",
+    notes: ["C2", "G2", "C3", "G3", "C4", "E4"],
+  },
 ] as const;
 
 export const PRESET_CATEGORY_ORDER: readonly TuningCategory[] = [

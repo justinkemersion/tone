@@ -139,10 +139,19 @@ export function TunerApp() {
                   )}
                 </p>
 
-                <p className="mt-2 text-center text-xs text-zinc-600">
-                  Preset:{" "}
-                  <span className="text-zinc-400">{currentTuning.name}</span>
-                </p>
+                <div className="mt-2 text-center">
+                  <p className="text-[11px] font-medium tracking-wide text-zinc-600 uppercase">
+                    Preset
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-zinc-300">
+                    {currentTuning.name}
+                  </p>
+                  {currentTuning.subtitle ? (
+                    <p className="mt-1 px-2 text-[11px] leading-snug text-zinc-500">
+                      {currentTuning.subtitle}
+                    </p>
+                  ) : null}
+                </div>
               </motion.section>
             </div>
 

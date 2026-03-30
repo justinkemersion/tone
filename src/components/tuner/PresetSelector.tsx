@@ -70,7 +70,9 @@ function PresetCard({
           </span>
         </span>
         {preset.subtitle ? (
-          <span className="pl-[22px] text-xs text-zinc-500">{preset.subtitle}</span>
+          <span className="line-clamp-3 pl-[22px] text-[11px] leading-snug text-zinc-500/90">
+            {preset.subtitle}
+          </span>
         ) : null}
         <span className="pl-[22px] font-mono text-[11px] tabular-nums text-zinc-600">
           {preset.notes.join(" · ")}
@@ -196,11 +198,11 @@ export function PresetSelector({
               {current?.name ?? "—"}
             </span>
             {current?.subtitle ? (
-              <span className="block truncate text-xs text-zinc-500">
+              <span className="mt-0.5 block truncate text-[11px] leading-snug text-zinc-500/85">
                 {current.subtitle}
               </span>
             ) : (
-              <span className="block truncate text-xs text-zinc-600">
+              <span className="mt-0.5 block truncate text-[11px] text-zinc-600">
                 {CATEGORY_LABELS[current?.category ?? "standard"]}
               </span>
             )}
