@@ -12,8 +12,8 @@ import type { OpenStringTarget, TuningConfig } from "@/lib/tuning/types";
 const FFT_SIZE = 4096;
 /** EMA factor — higher = smoother, slower to follow pitch changes. */
 const SMOOTH = 0.32;
-/** Keep showing last pitch for this long after a dropped frame (decay, noise gate). */
-const PITCH_HOLD_MS = 320;
+/** Keep showing last pitch after weak/missed frames so you can adjust during decay. */
+const PITCH_HOLD_MS = 2800;
 const IN_TUNE_CENTS = 5;
 
 export type TunerStatus = "idle" | "starting" | "running" | "error";

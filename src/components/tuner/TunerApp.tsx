@@ -37,6 +37,11 @@ export function TunerApp() {
     stopReference,
     muteAll,
     referencePlaying,
+    referenceCycleSeconds,
+    setReferenceCycleSeconds,
+    referenceCycleRunning,
+    startReferenceCycle,
+    stopReferenceCycle,
   } = useTunerContext();
 
   const listening = status === "running";
@@ -88,15 +93,70 @@ export function TunerApp() {
                   {activeMode === "listen" ? (
                     <>
                       Microphone analyzes pitch in real time. The arc maps
-                      cents deviation for the nearest semitone.
+                      cents deviation for the nearest semitone. The readout
+                      holds briefly as the note decays so you can adjust.
                     </>
                   ) : (
                     <>
-                      Tap a string to hear a continuous triangle-wave reference.
-                      One tone at a time, with fade in/out to avoid clicks.
+                      Tap a string for a reference tone, or use{" "}
+                      <span className="text-zinc-400">Play cycle</span> to move
+                      low → high through all strings, then repeat.
                     </>
                   )}
                 </p>
+
+                {activeMode === "play" ? (
+                  <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 backdrop-blur-md">
+                    <p className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
+                      String cycle
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+                      How long each string plays before advancing (then starts
+                      over at the low string).
+                    </p>
+                    <label
+                      htmlFor="ref-cycle-seconds"
+                      className="mt-3 block text-[11px] font-medium text-zinc-500"
+                    >
+                      Seconds per string
+                    </label>
+                    <input
+                      id="ref-cycle-seconds"
+                      type="number"
+                      min={0.5}
+                      max={60}
+                      step={0.5}
+                      disabled={referenceCycleRunning}
+                      value={referenceCycleSeconds}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setReferenceCycleSeconds(
+                          Number.isFinite(v) ? v : referenceCycleSeconds
+                        );
+                      }}
+                      className="mt-1.5 w-full rounded-lg border border-zinc-700/90 bg-zinc-950/60 px-3 py-2.5 font-mono text-sm tabular-nums text-zinc-100 outline-none focus:border-zinc-500 disabled:opacity-50"
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={referenceCycleRunning}
+                        onClick={startReferenceCycle}
+                        className="rounded-lg border border-emerald-600/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-600/25 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Play cycle
+                      </button>
+                      {referenceCycleRunning ? (
+                        <button
+                          type="button"
+                          onClick={stopReferenceCycle}
+                          className="rounded-lg border border-zinc-600 bg-zinc-800/60 px-4 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-colors hover:border-zinc-500"
+                        >
+                          Stop cycle
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </motion.aside>
 
               <motion.section
@@ -162,7 +222,7 @@ export function TunerApp() {
                 </h2>
                 <span className="text-xs text-zinc-600">
                   {activeMode === "play"
-                    ? "Tap to play"
+                    ? "Tap a string or use Play cycle"
                     : "Reference mode only"}
                 </span>
               </div>
@@ -204,17 +264,19 @@ export function TunerApp() {
                     Stop microphone
                   </button>
                 )
-              ) : referencePlaying ? (
+              ) : referencePlaying || referenceCycleRunning ? (
                 <button
                   type="button"
                   className="w-full rounded-lg border border-zinc-600 bg-zinc-800/60 px-4 py-3.5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-colors hover:border-zinc-500 sm:w-auto sm:min-w-[200px]"
                   onClick={stopReference}
                 >
-                  Stop reference tone
+                  {referenceCycleRunning
+                    ? "Stop reference / cycle"
+                    : "Stop reference tone"}
                 </button>
               ) : (
                 <p className="flex w-full items-center rounded-lg border border-dashed border-zinc-700/80 bg-zinc-900/30 px-4 py-3.5 text-sm text-zinc-500 sm:w-auto">
-                  Select a string above to hear its pitch.
+                  Tap a string or start Play cycle in the sidebar.
                 </p>
               )}
 

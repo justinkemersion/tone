@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -40,6 +41,12 @@ export type TunerContextValue = {
   stopReference: () => void;
   muteAll: () => void;
   referencePlaying: boolean;
+  /** Seconds each string sounds before advancing (reference cycle). */
+  referenceCycleSeconds: number;
+  setReferenceCycleSeconds: (seconds: number) => void;
+  referenceCycleRunning: boolean;
+  startReferenceCycle: () => void;
+  stopReferenceCycle: () => void;
   status: TunerStatus;
   error: string | null;
   start: () => Promise<void>;
@@ -55,6 +62,12 @@ const TunerContext = createContext<TunerContextValue | null>(null);
 export function TunerProvider({ children }: { children: ReactNode }) {
   const [tuningId, setTuningIdState] = useState(DEFAULT_TUNING_ID);
   const [activeMode, setActiveModeState] = useState<TunerActiveMode>("listen");
+  const [referenceCycleSeconds, setReferenceCycleSecondsState] = useState(4);
+  const [referenceCycleRunning, setReferenceCycleRunning] = useState(false);
+
+  const cycleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cycleRunningRef = useRef(false);
+  const openStringsRef = useRef<OpenStringTarget[]>([]);
 
   const {
     favoriteTuningIds,
@@ -92,33 +105,97 @@ export function TunerProvider({ children }: { children: ReactNode }) {
     isPlaying: referencePlaying,
   } = useReferenceTone();
 
+  useEffect(() => {
+    openStringsRef.current = openStrings;
+  }, [openStrings]);
+
+  const clearCycleTimer = useCallback(() => {
+    if (cycleTimeoutRef.current != null) {
+      clearTimeout(cycleTimeoutRef.current);
+      cycleTimeoutRef.current = null;
+    }
+    cycleRunningRef.current = false;
+    queueMicrotask(() => {
+      setReferenceCycleRunning(false);
+    });
+  }, []);
+
   const setTuningId = useCallback((id: string) => {
     setTuningIdState(id);
   }, []);
 
-  const setActiveMode = useCallback(
-    (mode: TunerActiveMode) => {
-      setActiveModeState((prev) => {
-        if (mode === prev) return prev;
-        if (mode === "listen") {
-          suspendOutput();
-        } else {
-          stopListen();
-        }
-        return mode;
+  const setActiveMode = useCallback((mode: TunerActiveMode) => {
+    setActiveModeState((prev) => (mode === prev ? prev : mode));
+  }, []);
+
+  const prevModeRef = useRef<TunerActiveMode>("listen");
+  useEffect(() => {
+    const prev = prevModeRef.current;
+    if (activeMode === prev) return;
+    prevModeRef.current = activeMode;
+    if (activeMode === "listen" && prev === "play") {
+      clearCycleTimer();
+      suspendOutput();
+    }
+    if (activeMode === "play" && prev === "listen") {
+      stopListen();
+    }
+  }, [activeMode, clearCycleTimer, stopListen, suspendOutput]);
+
+  const stopReferenceCycle = useCallback(() => {
+    clearCycleTimer();
+    stopSmooth();
+  }, [clearCycleTimer, stopSmooth]);
+
+  const startReferenceCycle = useCallback(() => {
+    if (activeMode !== "play") return;
+    clearCycleTimer();
+    const strings = openStringsRef.current;
+    if (strings.length === 0) return;
+    const sec = Math.min(60, Math.max(0.5, referenceCycleSeconds));
+    cycleRunningRef.current = true;
+    setReferenceCycleRunning(true);
+
+    let idx = 0;
+    const step = () => {
+      if (!cycleRunningRef.current) return;
+      const list = openStringsRef.current;
+      if (list.length === 0) {
+        clearCycleTimer();
+        stopSmooth();
+        return;
+      }
+      const t = list[idx % list.length];
+      void playString({
+        frequencyHz: t.hz,
+        note: t.note,
+        stringIndex: t.stringIndex,
       });
-    },
-    [stopListen, suspendOutput]
-  );
+      cycleTimeoutRef.current = setTimeout(() => {
+        if (!cycleRunningRef.current) return;
+        idx = (idx + 1) % list.length;
+        step();
+      }, sec * 1000);
+    };
+    step();
+  }, [
+    activeMode,
+    clearCycleTimer,
+    playString,
+    referenceCycleSeconds,
+    stopSmooth,
+  ]);
 
   useEffect(() => {
     if (activeMode !== "play") return;
+    clearCycleTimer();
     stopSmooth();
-  }, [tuningId, activeMode, stopSmooth]);
+  }, [tuningId, activeMode, stopSmooth, clearCycleTimer]);
 
   const playOpenString = useCallback(
     (stringIndex: number) => {
       if (activeMode !== "play") return;
+      clearCycleTimer();
       const target = openStrings.find((s) => s.stringIndex === stringIndex);
       if (!target) return;
       void playString({
@@ -127,17 +204,23 @@ export function TunerProvider({ children }: { children: ReactNode }) {
         stringIndex,
       });
     },
-    [activeMode, openStrings, playString]
+    [activeMode, clearCycleTimer, openStrings, playString]
   );
 
-  const stopReference = useCallback(() => {
-    stopSmooth();
-  }, [stopSmooth]);
+  const stopReference = stopReferenceCycle;
+
+  const setReferenceCycleSeconds = useCallback((seconds: number) => {
+    if (!Number.isFinite(seconds)) return;
+    setReferenceCycleSecondsState(seconds);
+  }, []);
 
   const muteAll = useCallback(() => {
+    clearCycleTimer();
     stopListen();
     disposeOutput();
-  }, [disposeOutput, stopListen]);
+  }, [clearCycleTimer, disposeOutput, stopListen]);
+
+  useEffect(() => () => clearCycleTimer(), [clearCycleTimer]);
 
   const activeNote =
     activeMode === "listen" ? noteLabel : referenceNote;
@@ -163,6 +246,11 @@ export function TunerProvider({ children }: { children: ReactNode }) {
       stopReference,
       muteAll,
       referencePlaying,
+      referenceCycleSeconds,
+      setReferenceCycleSeconds,
+      referenceCycleRunning,
+      startReferenceCycle,
+      stopReferenceCycle,
       status,
       error,
       start,
@@ -185,6 +273,11 @@ export function TunerProvider({ children }: { children: ReactNode }) {
       isFavoriteTuning,
       muteAll,
       referencePlaying,
+      referenceCycleRunning,
+      referenceCycleSeconds,
+      setReferenceCycleSeconds,
+      startReferenceCycle,
+      stopReferenceCycle,
       noteLabel,
       openStrings,
       playOpenString,
