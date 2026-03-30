@@ -13,6 +13,8 @@ Tone started as a focused foundation—a **`useTuner`** hook (Web Audio + autoco
 3. **Preset system** — Tunings are **typed data** (`TuningPreset` with optional **subtitle** for artist/context). The **PresetSelector** groups presets by **category**, supports **search**, and **favorites** persisted in **`localStorage`**.
 4. **Expanded library** — Beyond standard/drop/open shapes, the catalog now includes **song-oriented** presets (alternate and “ostrich”-style tunings) for real repertoire, while staying at **A4 = 440 Hz** and **12-TET** unless you change the code.
 
+The app **opens in Reference mode** by default; Listen uses autocorrelation with a **subharmonic guard** so thick strings are less likely to read an octave high (harmonic lock).
+
 The direction is still **configuration-first**: new tunings are added in data, and Hz are derived in one place (`resolveOpenStrings` → `noteToHz`) so Listen and Reference never drift.
 
 ---

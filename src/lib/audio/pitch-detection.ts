@@ -52,7 +52,8 @@ export class AutocorrPitchDetector implements PitchDetector {
     }
 
     if (bestTau < minPeriod + 1 || bestTau > maxPeriod - 1) {
-      return sampleRate / bestTau;
+      const hz = sampleRate / bestTau;
+      return preferGuitarFundamentalHz(hz, buffer, sampleRate, minHz);
     }
 
     const y0 = autocorrAt(buffer, bestTau - 1);
@@ -67,7 +68,8 @@ export class AutocorrPitchDetector implements PitchDetector {
 
     const refinedTau = bestTau + delta;
     if (refinedTau <= 0) return null;
-    return sampleRate / refinedTau;
+    const hz = sampleRate / refinedTau;
+    return preferGuitarFundamentalHz(hz, buffer, sampleRate, minHz);
   }
 }
 
@@ -79,4 +81,38 @@ function autocorrAt(buffer: Float32Array, tau: number): number {
     sum += buffer[i] * buffer[i + tau];
   }
   return sum;
+}
+
+/**
+ * Autocorrelation often locks onto a harmonic on thick strings (e.g. ~164 Hz
+ * instead of open E ~82 Hz). Prefer one octave down when the lower period still
+ * correlates strongly. Only applied below ~250 Hz so high-string fundamentals
+ * are not pulled down incorrectly.
+ */
+function preferGuitarFundamentalHz(
+  hz: number,
+  buffer: Float32Array,
+  sampleRate: number,
+  minHz: number
+): number {
+  const ceiling = 250;
+  let out = hz;
+  const n = buffer.length;
+
+  while (out > 100 && out <= ceiling && out / 2 >= minHz) {
+    const tauHigh = Math.round(sampleRate / out);
+    const tauLow = Math.round(sampleRate / (out / 2));
+    if (tauHigh < 2 || tauLow < 2 || tauHigh > n - 4 || tauLow > n - 4) {
+      break;
+    }
+    const cHigh = autocorrAt(buffer, tauHigh);
+    const cLow = autocorrAt(buffer, tauLow);
+    if (cHigh <= 1e-12) break;
+    if (cLow >= cHigh * 0.83) {
+      out /= 2;
+    } else {
+      break;
+    }
+  }
+  return out;
 }

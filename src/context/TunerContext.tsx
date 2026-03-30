@@ -61,7 +61,7 @@ const TunerContext = createContext<TunerContextValue | null>(null);
 
 export function TunerProvider({ children }: { children: ReactNode }) {
   const [tuningId, setTuningIdState] = useState(DEFAULT_TUNING_ID);
-  const [activeMode, setActiveModeState] = useState<TunerActiveMode>("listen");
+  const [activeMode, setActiveModeState] = useState<TunerActiveMode>("play");
   const [referenceCycleSeconds, setReferenceCycleSecondsState] = useState(4);
   const [referenceCycleRunning, setReferenceCycleRunning] = useState(false);
 
@@ -128,7 +128,7 @@ export function TunerProvider({ children }: { children: ReactNode }) {
     setActiveModeState((prev) => (mode === prev ? prev : mode));
   }, []);
 
-  const prevModeRef = useRef<TunerActiveMode>("listen");
+  const prevModeRef = useRef<TunerActiveMode>("play");
   useEffect(() => {
     const prev = prevModeRef.current;
     if (activeMode === prev) return;
