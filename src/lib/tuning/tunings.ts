@@ -63,11 +63,11 @@ export const TUNING_PRESETS: readonly TuningPreset[] = [
   },
   /* Song */
   {
-    id: "song-iris",
-    name: "Iris",
+    id: "song-blackbird",
+    name: "Blackbird",
     category: "song",
-    subtitle: "Goo Goo Dolls",
-    notes: ["D2", "A2", "D3", "D4", "D4", "D4"],
+    subtitle: "The Beatles",
+    notes: ["E2", "A2", "D3", "G3", "B3", "E4"],
   },
   {
     id: "song-rain-song",
