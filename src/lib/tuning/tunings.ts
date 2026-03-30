@@ -63,11 +63,25 @@ export const TUNING_PRESETS: readonly TuningPreset[] = [
   },
   /* Song */
   {
-    id: "song-blackbird",
-    name: "Blackbird",
+    id: "song-pink-moon",
+    name: "Pink Moon",
     category: "song",
-    subtitle: "The Beatles",
-    notes: ["E2", "A2", "D3", "G3", "B3", "E4"],
+    subtitle: "Nick Drake",
+    notes: ["C2", "G2", "C3", "F3", "C4", "E4"],
+  },
+  {
+    id: "song-california",
+    name: "California",
+    category: "song",
+    subtitle: "Joni Mitchell",
+    notes: ["E2", "B2", "E3", "G#3", "B3", "E4"],
+  },
+  {
+    id: "song-big-yellow-taxi",
+    name: "Big Yellow Taxi",
+    category: "song",
+    subtitle: "Joni Mitchell · open E (open D + capo 2 is common)",
+    notes: ["E2", "B2", "E3", "G#3", "B3", "E4"],
   },
   {
     id: "song-rain-song",
