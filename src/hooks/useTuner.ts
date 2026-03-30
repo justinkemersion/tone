@@ -10,7 +10,10 @@ import {
 import type { OpenStringTarget, TuningConfig } from "@/lib/tuning/types";
 
 const FFT_SIZE = 4096;
-const SMOOTH = 0.22;
+/** EMA factor — higher = smoother, slower to follow pitch changes. */
+const SMOOTH = 0.32;
+/** Keep showing last pitch for this long after a dropped frame (decay, noise gate). */
+const PITCH_HOLD_MS = 320;
 const IN_TUNE_CENTS = 5;
 
 export type TunerStatus = "idle" | "starting" | "running" | "error";
@@ -50,9 +53,21 @@ export function useTuner(options: UseTunerOptions): UseTunerResult {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const smoothedHzRef = useRef<number | null>(null);
-  const detectorRef = useRef(new AutocorrPitchDetector({ minHz: 70, maxHz: 1200 }));
+  const lastPitchAtRef = useRef(0);
+  const listeningRef = useRef(false);
+  const removeMicListenersRef = useRef<(() => void) | null>(null);
+  const detectorRef = useRef(
+    new AutocorrPitchDetector({
+      minHz: 70,
+      maxHz: 1200,
+      rmsGate: 0.006,
+    })
+  );
 
   const stop = useCallback(() => {
+    listeningRef.current = false;
+    removeMicListenersRef.current?.();
+    removeMicListenersRef.current = null;
     if (rafRef.current != null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -63,6 +78,7 @@ export function useTuner(options: UseTunerOptions): UseTunerResult {
     ctxRef.current = null;
     analyserRef.current = null;
     smoothedHzRef.current = null;
+    lastPitchAtRef.current = 0;
     setStatus("idle");
     setFrequencyHz(null);
     setNoteLabel(null);
@@ -103,33 +119,88 @@ export function useTuner(options: UseTunerOptions): UseTunerResult {
         await ctx.resume();
       }
 
+      listeningRef.current = true;
+      lastPitchAtRef.current = 0;
+      smoothedHzRef.current = null;
+
+      const onCtxState = () => {
+        if (
+          ctxRef.current === ctx &&
+          ctx.state === "suspended" &&
+          listeningRef.current
+        ) {
+          void ctx.resume();
+        }
+      };
+      ctx.addEventListener("statechange", onCtxState);
+
+      const onVisibility = () => {
+        if (
+          document.visibilityState === "visible" &&
+          ctxRef.current === ctx &&
+          listeningRef.current &&
+          ctx.state === "suspended"
+        ) {
+          void ctx.resume();
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+
+      const track = stream.getAudioTracks()[0];
+      const onTrackEnded = () => {
+        if (!listeningRef.current) return;
+        setError("The microphone was disconnected or taken by another app.");
+        stop();
+        setStatus("error");
+      };
+      track?.addEventListener("ended", onTrackEnded);
+
+      removeMicListenersRef.current = () => {
+        ctx.removeEventListener("statechange", onCtxState);
+        document.removeEventListener("visibilitychange", onVisibility);
+        track?.removeEventListener("ended", onTrackEnded);
+      };
+
       const timeBuffer = new Float32Array(analyser.fftSize);
       const detector = detectorRef.current;
 
       const tick = () => {
         const analyserNode = analyserRef.current;
         const audioCtx = ctxRef.current;
-        if (!analyserNode || !audioCtx) return;
+        if (!analyserNode || !audioCtx || !listeningRef.current) return;
+
+        if (audioCtx.state === "suspended") {
+          void audioCtx.resume();
+        }
 
         analyserNode.getFloatTimeDomainData(timeBuffer);
         const raw = detector.detect(timeBuffer, audioCtx.sampleRate);
+        const now = performance.now();
 
-        if (raw == null || !Number.isFinite(raw)) {
-          smoothedHzRef.current = null;
-          setFrequencyHz(null);
-          setNoteLabel(null);
-          setCents(null);
-        } else {
+        if (raw != null && Number.isFinite(raw)) {
+          lastPitchAtRef.current = now;
           const prev = smoothedHzRef.current;
           const next =
-            prev == null
-              ? raw
-              : prev + SMOOTH * (raw - prev);
+            prev == null ? raw : prev + SMOOTH * (raw - prev);
           smoothedHzRef.current = next;
           const chroma = hzToChromaticPitch(next, referenceHz);
           setFrequencyHz(next);
           setNoteLabel(chroma.label);
           setCents(chroma.cents);
+        } else if (
+          now - lastPitchAtRef.current < PITCH_HOLD_MS &&
+          smoothedHzRef.current != null
+        ) {
+          const sm = smoothedHzRef.current;
+          const chroma = hzToChromaticPitch(sm, referenceHz);
+          setFrequencyHz(sm);
+          setNoteLabel(chroma.label);
+          setCents(chroma.cents);
+        } else {
+          smoothedHzRef.current = null;
+          setFrequencyHz(null);
+          setNoteLabel(null);
+          setCents(null);
         }
 
         rafRef.current = requestAnimationFrame(tick);
