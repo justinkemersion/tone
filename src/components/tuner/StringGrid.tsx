@@ -4,7 +4,28 @@ import { motion } from "framer-motion";
 import type { OpenStringTarget } from "@/lib/tuning/types";
 import type { TunerActiveMode } from "@/context/TunerContext";
 
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.045,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 440, damping: 32 },
+  },
+};
+
 type Props = {
+  /** Changes when the tuning preset changes — drives enter animation. */
+  tuningKey: string;
   strings: OpenStringTarget[];
   mode: TunerActiveMode;
   activeStringIndex: number | null;
@@ -12,6 +33,7 @@ type Props = {
 };
 
 export function StringGrid({
+  tuningKey,
   strings,
   mode,
   activeStringIndex,
@@ -21,13 +43,22 @@ export function StringGrid({
 
   return (
     <motion.ul
+      key={tuningKey}
       layout
       className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3"
+      variants={listVariants}
+      initial="hidden"
+      animate="show"
     >
       {strings.map((s) => {
         const active = activeStringIndex === s.stringIndex;
         return (
-          <motion.li key={s.stringIndex} layout>
+          <motion.li
+            key={`${tuningKey}-${s.stringIndex}`}
+            layout
+            variants={itemVariants}
+            className="min-w-0"
+          >
             <motion.button
               type="button"
               disabled={!interactive}

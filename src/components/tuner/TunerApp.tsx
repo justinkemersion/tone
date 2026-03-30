@@ -4,7 +4,7 @@ import { LayoutGroup, motion } from "framer-motion";
 import { ModeToggle } from "@/components/tuner/ModeToggle";
 import { StringGrid } from "@/components/tuner/StringGrid";
 import { TunerArc } from "@/components/tuner/TunerArc";
-import { TuningSelector } from "@/components/tuner/TuningSelector";
+import { PresetSelector } from "@/components/tuner/PresetSelector";
 import { useTunerContext } from "@/context/TunerContext";
 
 function formatHz(hz: number | null): string {
@@ -26,6 +26,9 @@ export function TunerApp() {
     tuningId,
     setTuningId,
     tuningList,
+    favoriteTuningIds,
+    toggleFavoriteTuning,
+    isFavoriteTuning,
     currentTuning,
     openStrings,
     activeNote,
@@ -73,10 +76,13 @@ export function TunerApp() {
                 layout
                 className="flex flex-col gap-5 md:col-span-4 lg:col-span-4"
               >
-                <TuningSelector
+                <PresetSelector
+                  presets={tuningList}
                   value={tuningId}
                   onChange={setTuningId}
-                  options={tuningList}
+                  favoriteTuningIds={favoriteTuningIds}
+                  toggleFavoriteTuning={toggleFavoriteTuning}
+                  isFavoriteTuning={isFavoriteTuning}
                 />
                 <p className="rounded-xl border border-zinc-800/70 bg-zinc-900/35 p-4 text-xs leading-relaxed text-zinc-500 backdrop-blur-md">
                   {activeMode === "listen" ? (
@@ -152,6 +158,7 @@ export function TunerApp() {
                 </span>
               </div>
               <StringGrid
+                tuningKey={tuningId}
                 strings={openStrings}
                 mode={activeMode}
                 activeStringIndex={activeStringIndex}

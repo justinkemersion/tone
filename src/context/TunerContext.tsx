@@ -17,18 +17,22 @@ import {
   REFERENCE_A4_HZ,
   TUNING_LIBRARY,
 } from "@/lib/tuning/tuning-library";
+import { useFavoriteTunings } from "@/hooks/useFavoriteTunings";
 import type { TunerStatus } from "@/hooks/useTuner";
-import type { OpenStringTarget, TuningConfig } from "@/lib/tuning/types";
+import type { OpenStringTarget, TuningPreset } from "@/lib/tuning/types";
 
 export type TunerActiveMode = "listen" | "play";
 
 export type TunerContextValue = {
   activeMode: TunerActiveMode;
   setActiveMode: (mode: TunerActiveMode) => void;
-  currentTuning: TuningConfig;
+  currentTuning: TuningPreset;
   tuningId: string;
   setTuningId: (id: string) => void;
   tuningList: typeof TUNING_LIBRARY;
+  favoriteTuningIds: readonly string[];
+  toggleFavoriteTuning: (id: string) => void;
+  isFavoriteTuning: (id: string) => boolean;
   openStrings: OpenStringTarget[];
   activeNote: string | null;
   activeStringIndex: number | null;
@@ -51,6 +55,12 @@ const TunerContext = createContext<TunerContextValue | null>(null);
 export function TunerProvider({ children }: { children: ReactNode }) {
   const [tuningId, setTuningIdState] = useState(DEFAULT_TUNING_ID);
   const [activeMode, setActiveModeState] = useState<TunerActiveMode>("listen");
+
+  const {
+    favoriteTuningIds,
+    toggleFavoriteTuning,
+    isFavoriteTuning,
+  } = useFavoriteTunings();
 
   const currentTuning = useMemo(
     () => getTuningById(tuningId) ?? TUNING_LIBRARY[0],
@@ -143,6 +153,9 @@ export function TunerProvider({ children }: { children: ReactNode }) {
       tuningId,
       setTuningId,
       tuningList: TUNING_LIBRARY,
+      favoriteTuningIds,
+      toggleFavoriteTuning,
+      isFavoriteTuning,
       openStrings,
       activeNote,
       activeStringIndex,
@@ -166,8 +179,10 @@ export function TunerProvider({ children }: { children: ReactNode }) {
       cents,
       currentTuning,
       error,
+      favoriteTuningIds,
       frequencyHz,
       inTune,
+      isFavoriteTuning,
       muteAll,
       referencePlaying,
       noteLabel,
@@ -179,6 +194,7 @@ export function TunerProvider({ children }: { children: ReactNode }) {
       status,
       stopListen,
       stopReference,
+      toggleFavoriteTuning,
       tuningId,
     ]
   );
