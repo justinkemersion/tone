@@ -1,6 +1,9 @@
 "use client";
 
-import { TunerMeter } from "@/components/tuner/TunerMeter";
+import { LayoutGroup, motion } from "framer-motion";
+import { ModeToggle } from "@/components/tuner/ModeToggle";
+import { StringGrid } from "@/components/tuner/StringGrid";
+import { TunerArc } from "@/components/tuner/TunerArc";
 import { TuningSelector } from "@/components/tuner/TuningSelector";
 import { useTunerContext } from "@/context/TunerContext";
 
@@ -11,120 +14,205 @@ function formatHz(hz: number | null): string {
 
 export function TunerApp() {
   const {
+    activeMode,
+    setActiveMode,
     status,
     error,
     start,
     stop,
     frequencyHz,
-    noteLabel,
     cents,
     inTune,
     tuningId,
     setTuningId,
-    tuning,
     tuningList,
+    currentTuning,
     openStrings,
+    activeNote,
+    activeStringIndex,
+    playOpenString,
+    stopReference,
+    muteAll,
+    referencePlaying,
   } = useTunerContext();
 
   const listening = status === "running";
   const busy = status === "starting";
+  const listenActive = activeMode === "listen" && listening;
+
+  const displayHz =
+    activeMode === "listen"
+      ? frequencyHz
+      : activeStringIndex != null
+        ? openStrings.find((s) => s.stringIndex === activeStringIndex)?.hz ??
+          null
+        : null;
 
   return (
-    <div className="min-h-dvh bg-neutral-50 text-neutral-900">
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 py-10 sm:px-8">
-        <header className="mb-12 border-b border-neutral-200 pb-8">
-          <p className="text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">
-            Tone
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Guitar tuner
-          </h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-neutral-600">
-            Chromatic readout with equal temperament. Choose a tuning preset to
-            see open-string targets; the meter tracks the nearest semitone.
-          </p>
-        </header>
-
-        <main className="flex flex-1 flex-col gap-10">
-          <TuningSelector
-            value={tuningId}
-            onChange={setTuningId}
-            options={tuningList}
-          />
-
-          <section className="border border-neutral-200 bg-white p-6 sm:p-8">
-            <div className="text-center">
-              <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
-                Note
-              </p>
-              <p
-                className="mt-2 font-mono text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl"
-                aria-live="polite"
-              >
-                {noteLabel ?? "—"}
-              </p>
-              <p className="mt-4 font-mono text-lg tabular-nums text-neutral-700">
-                {formatHz(frequencyHz)}
-              </p>
-            </div>
-
-            <div className="mt-10">
-              <TunerMeter cents={cents} inTune={inTune} />
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
-              Open strings ({tuning.name})
-            </h2>
-            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {openStrings.map((s) => (
-                <li
-                  key={s.stringIndex}
-                  className="flex items-baseline justify-between border border-neutral-200 bg-white px-3 py-2.5"
-                >
-                  <span className="text-xs text-neutral-500">
-                    Str. {s.stringIndex}
-                  </span>
-                  <span className="font-mono text-sm tabular-nums text-neutral-900">
-                    {s.note}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {error ? (
-            <p
-              className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
-              role="alert"
-            >
-              {error}
+    <div className="min-h-dvh bg-zinc-950 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(39,39,42,0.9),transparent)] text-zinc-100">
+      <LayoutGroup>
+        <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+          <header className="border-b border-zinc-800/80 pb-8">
+            <p className="text-[11px] font-semibold tracking-[0.22em] text-zinc-500 uppercase">
+              Tone
             </p>
-          ) : null}
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
+              Guitar tuner
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
+              Listen with the mic or play reference tones from your tuning
+              preset. A4 = 440 Hz — detection and tones use the same library.
+            </p>
+          </header>
 
-          <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row">
-            {!listening ? (
+          <div className="mt-8 flex flex-1 flex-col gap-5 lg:gap-6">
+            <ModeToggle mode={activeMode} onChange={setActiveMode} />
+
+            <div className="grid flex-1 grid-cols-1 gap-5 md:grid-cols-12 md:gap-5 lg:gap-6">
+              <motion.aside
+                layout
+                className="flex flex-col gap-5 md:col-span-4 lg:col-span-4"
+              >
+                <TuningSelector
+                  value={tuningId}
+                  onChange={setTuningId}
+                  options={tuningList}
+                />
+                <p className="rounded-xl border border-zinc-800/70 bg-zinc-900/35 p-4 text-xs leading-relaxed text-zinc-500 backdrop-blur-md">
+                  {activeMode === "listen" ? (
+                    <>
+                      Microphone analyzes pitch in real time. The arc maps
+                      cents deviation for the nearest semitone.
+                    </>
+                  ) : (
+                    <>
+                      Tap a string to hear a continuous triangle-wave reference.
+                      One tone at a time, with fade in/out to avoid clicks.
+                    </>
+                  )}
+                </p>
+              </motion.aside>
+
+              <motion.section
+                layout
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-xl sm:p-8 md:col-span-8 lg:col-span-8"
+              >
+                <div className="text-center">
+                  <p className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
+                    {activeMode === "listen" ? "Detected" : "Reference"}
+                  </p>
+                  <p
+                    className="mt-3 font-mono text-5xl font-semibold tabular-nums tracking-tight text-zinc-50 sm:text-6xl"
+                    aria-live="polite"
+                  >
+                    {activeNote ?? "—"}
+                  </p>
+                  <p className="mt-4 font-mono text-lg tabular-nums text-zinc-400">
+                    {formatHz(displayHz)}
+                  </p>
+                </div>
+
+                <div className="mt-8">
+                  <TunerArc
+                    cents={cents}
+                    inTune={inTune}
+                    listenActive={listenActive}
+                  />
+                </div>
+
+                <p className="mt-6 text-center font-mono text-sm tabular-nums text-zinc-500">
+                  {listenActive && cents != null && Number.isFinite(cents) ? (
+                    <>
+                      {cents > 0 ? "+" : ""}
+                      {cents.toFixed(1)} cents
+                    </>
+                  ) : activeMode === "play" ? (
+                    "Reference mode — arc idle"
+                  ) : (
+                    "Start listening to see cents"
+                  )}
+                </p>
+
+                <p className="mt-2 text-center text-xs text-zinc-600">
+                  Preset:{" "}
+                  <span className="text-zinc-400">{currentTuning.name}</span>
+                </p>
+              </motion.section>
+            </div>
+
+            <section>
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                <h2 className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
+                  Strings
+                </h2>
+                <span className="text-xs text-zinc-600">
+                  {activeMode === "play"
+                    ? "Tap to play"
+                    : "Reference mode only"}
+                </span>
+              </div>
+              <StringGrid
+                strings={openStrings}
+                mode={activeMode}
+                activeStringIndex={activeStringIndex}
+                onStringPress={playOpenString}
+              />
+            </section>
+
+            {error ? (
+              <p
+                className="rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200 backdrop-blur-md"
+                role="alert"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            <div className="mt-auto flex flex-col gap-3 border-t border-zinc-800/80 pt-6 sm:flex-row sm:flex-wrap">
+              {activeMode === "listen" ? (
+                !listening ? (
+                  <button
+                    type="button"
+                    className="w-full rounded-lg border border-emerald-600/50 bg-emerald-600/15 px-4 py-3.5 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[200px]"
+                    onClick={() => void start()}
+                    disabled={busy}
+                  >
+                    {busy ? "Starting…" : "Start microphone"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="w-full rounded-lg border border-zinc-600 bg-zinc-800/60 px-4 py-3.5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-colors hover:border-zinc-500 sm:w-auto sm:min-w-[200px]"
+                    onClick={stop}
+                  >
+                    Stop microphone
+                  </button>
+                )
+              ) : referencePlaying ? (
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-zinc-600 bg-zinc-800/60 px-4 py-3.5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-colors hover:border-zinc-500 sm:w-auto sm:min-w-[200px]"
+                  onClick={stopReference}
+                >
+                  Stop reference tone
+                </button>
+              ) : (
+                <p className="flex w-full items-center rounded-lg border border-dashed border-zinc-700/80 bg-zinc-900/30 px-4 py-3.5 text-sm text-zinc-500 sm:w-auto">
+                  Select a string above to hear its pitch.
+                </p>
+              )}
+
               <button
                 type="button"
-                className="w-full border border-neutral-900 bg-neutral-900 px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => void start()}
-                disabled={busy}
+                className="w-full rounded-lg border border-red-900/50 bg-red-950/35 px-4 py-3.5 text-sm font-medium text-red-100/90 backdrop-blur-md transition-colors hover:border-red-800/70 hover:bg-red-950/50 sm:ml-auto sm:w-auto"
+                onClick={muteAll}
               >
-                {busy ? "Starting…" : "Use microphone"}
+                Mute all
               </button>
-            ) : (
-              <button
-                type="button"
-                className="w-full border border-neutral-300 bg-white px-4 py-3 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-900"
-                onClick={stop}
-              >
-                Stop
-              </button>
-            )}
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </LayoutGroup>
     </div>
   );
 }

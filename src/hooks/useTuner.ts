@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AutocorrPitchDetector } from "@/lib/audio/pitch-detection";
 import { hzToChromaticPitch } from "@/lib/audio/note-utils";
-import { TuningEngine } from "@/lib/tuning/tuning-engine";
+import {
+  REFERENCE_A4_HZ,
+  resolveOpenStrings,
+} from "@/lib/tuning/tuning-library";
 import type { OpenStringTarget, TuningConfig } from "@/lib/tuning/types";
 
 const FFT_SIZE = 4096;
@@ -34,11 +37,7 @@ export type UseTunerResult = {
 };
 
 export function useTuner(options: UseTunerOptions): UseTunerResult {
-  const referenceHz = options.referenceHz ?? 440;
-  const engine = useMemo(
-    () => new TuningEngine(options.tuning),
-    [options.tuning]
-  );
+  const referenceHz = options.referenceHz ?? REFERENCE_A4_HZ;
 
   const [status, setStatus] = useState<TunerStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -150,8 +149,8 @@ export function useTuner(options: UseTunerOptions): UseTunerResult {
   useEffect(() => () => stop(), [stop]);
 
   const openStrings = useMemo(
-    () => engine.getOpenStringTargets(referenceHz),
-    [engine, referenceHz]
+    () => resolveOpenStrings(options.tuning, referenceHz),
+    [options.tuning, referenceHz]
   );
 
   const inTune = cents != null && Math.abs(cents) <= IN_TUNE_CENTS;
