@@ -9,6 +9,6 @@ Rebuild Tone in `justinkemersion/tone` as a Foundry fork. Overlay complete; this
 - [x] Flux helpers + server actions fail closed
 - [x] `/tunings`, `/settings`, `/recordings` (honest R2)
 - [x] Theme/local prefs: device storage is not overwritten by the tuner
-- [ ] `pnpm lint && pnpm typecheck && pnpm exec vitest run && pnpm check:drift && pnpm build` (re-run after this pass)
-- [ ] Browser pass 375 / 768 / 1280 / 1440 dark+light
-- [x] Honest `foundry:doctor` / `flux:doctor` (fail without Justin credentials)
+- [x] `pnpm lint && pnpm typecheck && pnpm exec vitest run && pnpm check:drift && pnpm build` (pass on this branch)
+- [ ] Browser pass 375 / 768 / 1280 / 1440 dark+light — **not completed** (HTTP route checks only)
+- [x] Honest `foundry:doctor` / `flux:doctor` / `foundry:verify:template` (fail without Justin Flux hash / `.env`)

@@ -56,7 +56,7 @@ pnpm foundry:doctor
 pnpm foundry:verify
 ```
 
-`foundry:new-app-check` / live doctors fail honestly until Flux and OAuth exist. Do not stub them green.
+`foundry:new-app-check` / `foundry:verify:template` / live doctors fail honestly until Flux and OAuth exist. Do not stub them green. Exact remaining secrets: [`docs/SECRETS.md`](docs/SECRETS.md). Recorded command results: [`PROGRESS.md`](PROGRESS.md).
 
 ## Layout
 

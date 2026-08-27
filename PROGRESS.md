@@ -4,15 +4,17 @@ Another agent can resume from this file.
 
 ## Status (2026-08-27)
 
-Foundry overlay + Tone domain are in the tree on `cursor/foundry-rebuild-7e17`. PR: https://github.com/justinkemersion/tone/pull/1
+**Rebuild shipped on `cursor/foundry-rebuild-7e17`.** PR: https://github.com/justinkemersion/tone/pull/1
 
-The product is a public guitar tuner at `/` (no account wall). Auth/Flux/R2 are wired as contracts with honest unavailable states. Live Flux and OAuth secrets are **not** present in this environment.
+Foundry overlay + Tone domain are in the tree. `/` is a public guitar tuner. Auth/Flux/R2 are contracts with honest unavailable states. Live Flux and OAuth secrets are **not** present in this environment.
+
+**Visual / screenshot inspection did not complete** (no pixel-level review at 375/768/1280/1440 dark+light). Route HTTP checks did.
 
 ## Overlay
 
 - Upstream: `justinkemersion/flux-app-foundry` @ `1abbc5507d7d1c8ee71279577e7fdf11f0a3850e`
 - Stamped baseline: `foundry.baseline.json` `0.6.1` / `e818c6e` (not re-stamped)
-- `pnpm foundry:status` → `current` (84/84). New `lib/flux/{preferences,custom-tunings,favorites}.ts` are extra files, not fingerprint mismatches.
+- `pnpm foundry:status` → `current` (84/84). Extra `lib/flux/{preferences,custom-tunings,favorites}.ts` do not break fingerprints.
 
 ## Product
 
@@ -23,27 +25,37 @@ The product is a public guitar tuner at `/` (no account wall). Auth/Flux/R2 are 
 - `/tunings` presets + custom CRUD (auth + Flux)
 - `/settings` always local; Flux upsert when signed in
 - `/recordings` honest R2-unavailable; upload never reports success
-- Theme: localStorage `tone-prefs-v1` wins over server default so anonymous dark/light sticks
+- Theme: localStorage `tone-prefs-v1` is merged, not overwritten by the tuner
 - PWA shell cache; auth/Flux/R2 not claimed offline
 
 ## Remaining Justin env
 
 Exact list: `docs/SECRETS.md`. `flux.json` hash is still `REPLACE_AFTER_FLUX_INIT`. Do not invent a hash.
 
-## Commands
+## Validation recorded (commit `e5d8fdd` + docs pass)
 
-```bash
-pnpm lint
-pnpm typecheck
-pnpm exec vitest run
-pnpm check:drift
-pnpm build
-pnpm foundry:status
-pnpm foundry:compat
-pnpm foundry:doctor    # expected fail without .env / Flux
-pnpm flux:doctor       # expected fail without Flux
-pnpm foundry:new-app-check  # expected fail until flux.json hash is real
-```
+| Command | Result |
+|---------|--------|
+| `pnpm lint` | pass |
+| `pnpm typecheck` | pass |
+| `pnpm exec vitest run` | **119** tests, 21 files, pass |
+| `pnpm check:drift` | pass (file-sizes, imports, contracts, SQL placeholders, graph) |
+| `pnpm build` (template CI stubs) | pass |
+| `pnpm foundry:status` | `current` 84/84, 6/6 security invariants |
+| `pnpm foundry:compat` | local pass; live probes skipped/pending |
+| `pnpm foundry:verify:template` | **fails honestly** at `foundry:new-app-check` (`flux.json` hash `REPLACE_AFTER_FLUX_INIT`) after lint/typecheck/test/drift already passed |
+| `pnpm foundry:doctor` | **fails honestly** — no `.env`; hash placeholder; missing `AUTH_SECRET` / `FLUX_URL` / `FLUX_GATEWAY_JWT_SECRET` |
+| `pnpm flux:doctor` | **fails honestly** — hash placeholder, no login, no `FLUX_URL` |
+| `pnpm foundry:new-app-check` | **fails honestly** — flux.json hash not configured |
+
+HTTP against `http://localhost:3000` (dev, `AUTH_SECRET` stub only):
+
+| Path | Result |
+|------|--------|
+| `/` `/tunings` `/settings` `/recordings` `/login` `/manifest.webmanifest` | **200** |
+| `/dashboard` | **307** → `/login` (fail-closed; unauthenticated) |
+
+**Not done:** GUI/browser visual pass. Do not claim dark/light, viewport, or a11y screenshot review.
 
 ## Resume notes
 
@@ -52,3 +64,4 @@ pnpm foundry:new-app-check  # expected fail until flux.json hash is real
 - Do not put `NEXT_PUBLIC_FLUX_*` anywhere
 - Do not re-stamp `foundry.baseline.json`
 - Homepage must stay public; `(dashboard)` stays fail-closed
+- Next human work: `flux init` + OAuth + optional R2 from `docs/SECRETS.md`; optional visual QA
