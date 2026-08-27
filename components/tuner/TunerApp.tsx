@@ -131,7 +131,7 @@ export function TunerApp({
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-3xl flex-col justify-center gap-8 px-4 py-8">
+    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-3xl flex-col justify-center gap-5 px-4 py-5 sm:gap-8 sm:py-8">
       <NoteDisplay view={view} />
       <TunerNeedle cents={view.cents} intonation={view.intonation} />
       {mode === "guitar" ? (

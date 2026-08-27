@@ -8,7 +8,7 @@ Another agent can resume from this file.
 
 Foundry overlay + Tone domain are in the tree. `/` is a public guitar tuner. Auth/Flux/R2 are contracts with honest unavailable states. Live Flux and OAuth secrets are **not** present in this environment.
 
-**Visual / screenshot inspection did not complete** (no pixel-level review at 375/768/1280/1440 dark+light). Route HTTP checks did.
+**Visual pass (2026-08-27 follow-up):** Headless Chrome screenshots at 375 / 768 / 1280, dark and light, for `/` `/tunings` `/settings` `/login`, plus `/recordings` once (1280 dark). **1440 not captured.** Files: `/opt/cursor/artifacts/screenshots/`. Layout fixes from that pass: six strings stay on one row at 375; tighter tuner stack on mobile; Tuner nav link hidden below `sm` (TONE still goes home); extra bottom padding on `/tunings`.
 
 ## Overlay
 
@@ -55,7 +55,9 @@ HTTP against `http://localhost:3000` (dev, `AUTH_SECRET` stub only):
 | `/` `/tunings` `/settings` `/recordings` `/login` `/manifest.webmanifest` | **200** |
 | `/dashboard` | **307** → `/login` (fail-closed; unauthenticated) |
 
-**Not done:** GUI/browser visual pass. Do not claim dark/light, viewport, or a11y screenshot review.
+**Not captured:** 1440; `/recordings` at 375/768 or light; live microphone (permission not granted in this environment). Next.js dev “N” overlay appears in screenshots; it is not product UI.
+
+After layout fixes: `pnpm lint`, `typecheck`, `vitest run` (119), and template-env `pnpm build` passed. `flux.json` hash untouched.
 
 ## Resume notes
 

@@ -36,6 +36,7 @@ export function SiteNav({
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "rounded-md px-2 py-1 text-xs sm:text-sm",
+                  link.href === "/" && "hidden sm:inline-block",
                   active
                     ? "text-[var(--foreground)]"
                     : "text-[var(--muted-fg)] hover:text-[var(--foreground)]",

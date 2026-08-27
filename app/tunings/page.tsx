@@ -29,7 +29,7 @@ export default async function TuningsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8 pb-16">
       <PageHeader
         title="Tunings"
         description="Built-in presets are always here. Custom tunings save to your account when Flux is connected."
