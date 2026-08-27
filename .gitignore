@@ -32,6 +32,18 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local plans and agent artifacts (not committed)
+.local/
+
+# dependency report artifacts (CI uploads these)
+.local/deps-reports/
+.local/reports/
+
+# generated inventories (regenerate with pnpm foundry:report)
+docs/generated/routes.md
+docs/generated/components.md
 
 # vercel
 .vercel

@@ -1,0 +1,11 @@
+---
+description: Anti-drift file size and workflow
+globs: **/*
+alwaysApply: true
+---
+
+Follow `_contract/anti-drift.md`. Run `pnpm check:drift` before finishing tasks.
+
+LOC limits: components 250, app pages 300, lib 400.
+
+Execute `plans/` incrementally; do not improvise cross-repo refactors.

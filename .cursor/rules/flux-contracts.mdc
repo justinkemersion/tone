@@ -1,0 +1,11 @@
+---
+description: Flux integration rules
+globs: lib/flux/**/*,app/**/actions*.ts,app/**/actions/**/*
+alwaysApply: false
+---
+
+Follow `_contract/flux.md`.
+
+- Use `fluxJson(sub, path, init)` only
+- Mint JWT per request; never expose Flux JWT to the browser
+- `sub` === `session.user.id` === row `user_id`

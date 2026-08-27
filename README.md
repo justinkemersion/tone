@@ -1,154 +1,91 @@
-# Tone
+# flux-app-foundry
 
-**Tone** is a browser-based **guitar tuner** for everyday practice: **Listen** mode analyzes your playing from the mic, and **Reference** mode plays steady **open-string** pitches from the preset you choose. Both paths read the **same tuning data**, so detected notes and reference tones always agree.
+A disciplined Flux-first CRUDe application system for contract-driven, anti-drift development with Cursor.
 
----
+**Status:** 0.1 foundation · 0.2 repeatable setup · 0.3 observable architecture · 0.4 fork-proven · 0.5 baseline lifecycle · **0.6 reference compatibility harness**.
 
-## Where this project is going
+Machine baseline: [`foundry.baseline.json`](foundry.baseline.json) · ownership: [`docs/adr/001-baseline-ownership.md`](docs/adr/001-baseline-ownership.md) · agents: [`AGENTS.md`](AGENTS.md) · reference: [`docs/REFERENCE_APP.md`](docs/REFERENCE_APP.md) · baseline notes: [`docs/BASELINE_CHANGELOG.md`](docs/BASELINE_CHANGELOG.md).
 
-Tone started as a focused foundation—a **`useTuner`** hook (Web Audio + autocorrelation), configuration-driven tunings, and a simple meter. It has grown into a **dual-mode** instrument UI:
+## Stack
 
-1. **Core audio** — Mic analysis and a **triangle-wave** reference generator with **gain envelopes** (no clicks), single active reference tone, **Mute all** to stop everything.
-2. **Modern UI** — Dark zinc layout, glass-style panels, **SVG arc** meter (with an in-tune glow), **Framer Motion** for mode and layout transitions, responsive **bento-style** string grid.
-3. **Preset system** — Tunings are **typed data** (`TuningPreset` with optional **subtitle** for artist/context). The **PresetSelector** groups presets by **category**, supports **search**, and **favorites** persisted in **`localStorage`**.
-4. **Expanded library** — Beyond standard/drop/open shapes, the catalog now includes **song-oriented** presets (alternate and “ostrich”-style tunings) for real repertoire, while staying at **A4 = 440 Hz** and **12-TET** unless you change the code.
+- Next.js App Router, React, TypeScript (strict), Tailwind CSS
+- Auth.js v5 (GitHub and/or Google — whichever env vars are set)
+- Flux / PostgREST / PostgreSQL with RLS-first schema
+- pnpm, Vitest, GitHub Actions CI
 
-The app **opens in Reference mode** by default; Listen uses autocorrelation with a **subharmonic guard** so thick strings are less likely to read an octave high (harmonic lock).
-
-The direction is still **configuration-first**: new tunings are added in data, and Hz are derived in one place (`resolveOpenStrings` → `noteToHz`) so Listen and Reference never drift.
-
----
-
-## Features
-
-| Area | What you get |
-|------|----------------|
-| **Listen** | `AnalyserNode` + autocorrelation, chromatic note + **Hz**, **cents** vs equal temperament, spring-animated arc. |
-| **Reference** | Tap a string for a looping reference pitch; switching string or preset **fades** the previous tone. |
-| **Presets** | Categorized library (see below); search; **heart** favorites; active preset highlighted in the picker and on the main card (name + muted subtitle). |
-| **Mute all** | Stops the mic path and closes the reference output context after a short fade. |
-
----
-
-## Tuning presets (overview)
-
-All open-string pitches are **scientific notation** at **A4 = 440 Hz** (equal temperament). Per-string **Hz** are computed—not hand-pasted—so they stay consistent.
-
-### Standard & half-step
-
-- **Standard** — E A D G B E  
-- **E♭ standard** — Half step down from standard  
-- **D standard** — Whole step down from standard  
-
-### Drop
-
-- **Drop D**, **Drop C**, **Drop B**
-
-### Open / modal
-
-- **Open G**, **Open D**, **DADGAD**
-
-### Song (with subtitles in the app)
-
-| Preset | Notes |
-|--------|--------|
-| **Pink Moon** | Nick Drake — C G C F C E |
-| **California** | Joni Mitchell — open E (E B E G♯ B E) |
-| **Big Yellow Taxi** | Joni Mitchell — same open E; many players use open D + capo 2 (noted in UI) |
-| **The Rain Song** | Led Zeppelin — DADGAD |
-| **Holocene** | Bon Iver — open B♭ (B♭ F B♭ D F B♭) |
-| **Venus in Furs** | The Velvet Underground — “ostrich” (D D D D D D at successive octaves) |
-| **Schizophrenia** | Sonic Youth — F♯ F♯ B B C♯ C♯ |
-| **Skinny Love** | Bon Iver — open C variant (C G C G C E; differs from Pink Moon on the 4th string) |
-
-*Song tunings are for reference and practice; recordings may use capos or slightly different concert pitch.*
-
----
-
-## Tech stack
-
-- [Next.js](https://nextjs.org) (App Router) + TypeScript  
-- [Tailwind CSS](https://tailwindcss.com) v4  
-- [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)  
-- [Framer Motion](https://www.framer.com/motion/)  
-
----
-
-## Getting started
+## Quick start
 
 ```bash
-npm install
-npm run dev
+pnpm install
+cp .env.example .env
+# Set AUTH_SECRET, at least one OAuth provider, FLUX_URL, FLUX_GATEWAY_JWT_SECRET
+pnpm foundry:doctor
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). **Microphone access** needs a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS or `localhost`).
+Open [http://localhost:3000](http://localhost:3000). Sign in, then use `/dashboard`.
+
+## Flux setup
+
+Create the Flux project **before** domain SQL. Full guide: [`docs/FLUX_WORKFLOW.md`](docs/FLUX_WORKFLOW.md).
 
 ```bash
-npm run build   # production build
-npm run start   # production server
-npm run lint    # ESLint
-npm test           # Vitest (watch)
-npm run test:run   # Vitest once (CI-friendly)
+flux login
+flux init                    # or link — 7-char hash in flux.json (from flux list)
+flux push sql/migrations/      # versioned ledger (directory push)
+pnpm flux:schema:sync          # FLUX_POSTGREST_SCHEMA → .env.local (control-plane apiSchema)
+pnpm flux:doctor               # control plane + gateway bridge probes
 ```
 
----
+See [`sql/migrations/README.md`](sql/migrations/README.md).
 
-## Tests (Vitest + Testing Library)
+## Scripts
 
-Automated tests live next to source as `*.test.ts` / `*.test.tsx`. **`npm run test:run`** executes the full suite.
+| Command | Purpose |
+|---------|---------|
+| `pnpm foundry:report` | Architecture reports + generated route/component inventories |
+| `pnpm flux:doctor` | Flux control plane, schema sync, gateway bridge probes |
+| `pnpm foundry:doctor` | App env, OAuth, SQL hygiene, **local baseline/security**, + Flux checks when `FLUX_URL` is set |
+| `pnpm foundry:status` | Non-destructive baseline drift report (current/behind/customized/missing_security/unknown) |
+| `pnpm foundry:verify:template` | CI / fresh clone: lint, typecheck, test, drift, fork check, status, build — **no `.env`** |
+| `pnpm foundry:golden-app` | Materialize a temp app and validate generated output + status fixtures |
+| `pnpm foundry:compat` | Canonical reference-app compatibility harness (local; `--live` opt-in) |
+| `pnpm foundry:reference:verify` | Alias for `foundry:compat` |
+| `pnpm foundry:verify` | Full gate with your `.env`: run `foundry:doctor` first on forks |
+| `pnpm foundry:new-app-check` | Fork readiness (baseline manifest, contracts, flux hash) |
+| `pnpm foundry:baseline:stamp` | Maintainer: refresh fingerprints + source.commit (Foundry upstream only) |
+| `pnpm flux:schema:sync` | Write `FLUX_POSTGREST_SCHEMA` to `.env.local` from control plane |
+| `pnpm deps:check` / `pnpm deps:audit` | Dependency maintenance |
+| `pnpm seed:demo` | Seed sample data (`DEMO_USER_SUB` required) |
 
-### Covered today
+## Forking
 
-| Area | What it checks |
-|------|----------------|
-| **`lib/audio/note-utils`** | Note parsing (incl. flats), `midiToHz` / `noteToHz`, cents, chromatic pitch mapping |
-| **`lib/audio/pitch-detection`** | `AutocorrPitchDetector`: short/silent buffers → `null`; synthetic sines ~440 Hz and ~82 Hz |
-| **`lib/tuning/tuning-engine`** | Open-string targets, string indices (6 → 1), custom reference Hz |
-| **`lib/tuning/tunings`** | `getTuningById`, `DEFAULT_TUNING_ID`, search filter, category grouping |
-| **`lib/tuning/tuning-library`** | `resolveOpenStrings`, `REFERENCE_A4_HZ` |
-| **`useFavoriteTunings`** | `localStorage` hydration, toggle + persist, corrupt JSON ignored |
-| **`useTunerContext`** | Throws if used outside `TunerProvider` |
-| **`ModeToggle`** | Tab clicks invoke `onChange` with the right mode |
-| **`StringGrid`** | String tap in Reference mode; disabled / no handler in Listen mode |
+See [`docs/FIRST_FORK.md`](docs/FIRST_FORK.md) and [`_contract/forking.md`](_contract/forking.md).
 
-Framer Motion is stubbed in `vitest.setup.ts` so component tests stay deterministic.
+Track lineage in `foundry.baseline.json` + `FOUNDRY_BASELINE.md` and pins in `_drift/dependency-exceptions.md`.
 
-### Not covered yet (TODO)
+## Cursor workflow
 
-- [ ] **`useTuner`** — mic stream, `AnalyserNode` loop, integration with pitch detector (needs `getUserMedia` / `AudioContext` mocks or a thin test harness).
-- [ ] **`useReferenceTone`** — oscillator output, envelopes, suspend/dispose (Web Audio mocks).
-- [ ] **`TunerProvider` / `TunerContext`** — mode transitions, reference cycle timing, `muteAll` wiring (mock child hooks and assert orchestration).
-- [ ] **`PresetSelector` / `TunerApp`** — search, favorites UI, responsive sheet (optional Playwright or heavier RTL).
-- [ ] **E2E** — real browser smoke on iOS Safari / Chrome (mic permission, safe areas).
+1. Read `_contract/` (start with [`_contract/robust-workflow.md`](_contract/robust-workflow.md)) and the active `plans/NNN-*.md`
+2. Use `prompts/` templates for repeatable tasks
+3. **Deploy code via git only** — [`_contract/deploy.md`](_contract/deploy.md); no rsync/scp shims
+4. Template repo: `pnpm foundry:verify:template`. Fork with `.env`: `pnpm flux:doctor`, `pnpm foundry:doctor`, then `pnpm foundry:verify`
 
----
+## Philosophy
 
-## Project layout (high level)
+Essays in [`docs/philosophy/`](docs/philosophy/) describe the methodology (AI-assisted, anti-drift, Flux-first, boring CRUD).
 
-| Path | Role |
-|------|------|
-| `src/hooks/useTuner.ts` | Mic capture, analyser loop, pitch → note + cents |
-| `src/hooks/useReferenceTone.ts` | Reference oscillator, envelopes, single-voice policy |
-| `src/hooks/useFavoriteTunings.ts` | Favorite preset IDs in `localStorage` |
-| `src/lib/tuning/tunings.ts` | **`TUNING_PRESETS`** — all presets, categories, search/group helpers |
-| `src/lib/tuning/tuning-library.ts` | **`REFERENCE_A4_HZ`**, re-exports, **`resolveOpenStrings`** → Hz |
-| `src/context/TunerContext.tsx` | Listen / Reference mode, preset id, favorites API, mute |
-| `src/components/tuner/` | `TunerApp`, `PresetSelector`, `StringGrid`, `TunerArc`, `ModeToggle`, … |
+## Repository layout
 
----
+- `_contract/` — enforceable laws (`robust-workflow.md`, `deploy.md`, `dependency-policy.md`, `forking.md`, …)
+- `fixtures/reference-app/` — canonical compatibility canary (not a second product app)
+- `docs/generated/` — inventories from `foundry:report` (gitignored; see README there)
+- `_drift/` — fork exception log
+- `lib/config/` — typed env + Flux schema helpers
+- `plans/` — phased execution checklists
+- `lib/flux/` — single Flux HTTP boundary
+- `sql/migrations/` — RLS-first schema (unqualified names)
 
-## TODO / ideas
+## Identity
 
-- [ ] **User-defined tunings** — UI to add/edit presets (or import JSON) without editing `tunings.ts`; optional capo field as a hint only.  
-- [ ] **Alternate pitch algorithms** — MPM or YIN behind a `PitchDetector` interface; compare stability on low strings.  
-- [ ] **A4 / concert pitch** — Slider wired to `REFERENCE_A4_HZ` for both detection and reference.  
-- [ ] **Per-string lock** — In Listen mode, bias cents toward the **active preset’s** open-string targets.  
-- [ ] **Other instruments** — Bass / ukulele string sets using the same `TuningPreset` shape.  
-- [ ] **Input level meter** — RMS from the time-domain buffer.  
-- [ ] **PWA** — Installable, phone-on-stand workflow.  
-- [ ] **Accessibility** — Arc semantics, reduced-motion variants for Framer.  
-- [ ] **More tests** — See **Tests** section above for gaps (`useTuner`, `useReferenceTone`, full context, E2E).  
-
----
-
-Bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+`session.user.id` is the OAuth provider account id. It becomes the JWT `sub` and all `user_id` columns. Flux is never called from the browser.

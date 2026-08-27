@@ -1,0 +1,11 @@
+---
+description: Layer boundaries and import rules
+globs: app/**/*,components/**/*,lib/**/*
+alwaysApply: false
+---
+
+Read `_contract/architecture.md` before structural changes.
+
+- Flux HTTP only via `lib/flux/client.ts`
+- No `lib/flux` imports in client components or `components/**`
+- Server actions for mutations; RSC for reads
