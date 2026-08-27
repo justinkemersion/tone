@@ -17,7 +17,7 @@ No Flux, OAuth, or R2 credentials are required to tune.
 
 ## What it does
 
-- Continuous pitch detection in the browser (McLeod Pitch Method / NSDF, not zero-crossing)
+- Continuous pitch detection in the browser (YIN, not zero-crossing)
 - 12-TET math with a configurable A4 (default 440 Hz)
 - Guitar mode (nearest open string) and chromatic mode
 - Built-in presets: Standard, Drop D, D Standard, Drop C, Open G, Open D, DADGAD

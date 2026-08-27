@@ -78,6 +78,8 @@ describe("tuner states", () => {
     rerender(<MicGate mic="permission-denied" onStart={() => undefined} />);
     expect(screen.getByRole("button", { name: "Try microphone again" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try microphone again" }));
+    rerender(<MicGate mic="unavailable" onStart={() => undefined} />);
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
   });
 
   it("renders flat/sharp labels on the needle", () => {

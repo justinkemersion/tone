@@ -37,6 +37,34 @@ export function parseLocalPrefs(raw: unknown): LocalPrefs {
   };
 }
 
+export function readStoredPrefs(): LocalPrefs | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_PREFS_KEY);
+    if (!raw) return null;
+    return parseLocalPrefs(JSON.parse(raw) as unknown);
+  } catch {
+    return null;
+  }
+}
+
+export function writeStoredPrefs(prefs: LocalPrefs): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LOCAL_PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+/** Merge a patch onto stored prefs without dropping theme or other fields. */
+export function patchStoredPrefs(patch: Partial<LocalPrefs>, fallback: LocalPrefs): LocalPrefs {
+  const current = readStoredPrefs() ?? fallback;
+  const next = { ...current, ...patch };
+  writeStoredPrefs(next);
+  return next;
+}
+
 export function parseFavoriteIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((id): id is string => typeof id === "string" && id.length > 0);

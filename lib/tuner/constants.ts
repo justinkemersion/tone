@@ -11,11 +11,8 @@ export const DETECT_MAX_HZ = 1400;
 /** RMS (0–1) below which the frame is silence. */
 export const RMS_GATE = 0.006;
 
-/** NSDF peak value required to trust a pitch. */
+/** YIN / confidence floor to trust a pitch (1 - CMNDF dip). */
 export const CLARITY_GATE = 0.85;
-
-/** First-peak cutoff as a fraction of the highest NSDF peak (McLeod). */
-export const MPM_CUTOFF = 0.93;
 
 export const IN_TUNE_CENTS = 5;
 export const NEARLY_TUNE_CENTS = 12;

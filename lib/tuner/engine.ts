@@ -1,4 +1,4 @@
-import { detectPitchMpm } from "./pitch/mpm";
+import { detectPitchYin } from "./pitch/yin";
 import { preferGuitarFundamental } from "./pitch/octave";
 import { hzToChromaticPitch } from "./theory";
 import { resolveOpenStrings, type TuningPreset } from "./presets";
@@ -36,7 +36,7 @@ export function ingestFrame(
 ): TunerView {
   const estimate =
     engine.mic === "listening" && !engine.muted
-      ? detectPitchMpm(buffer, sampleRate)
+      ? detectPitchYin(buffer, sampleRate)
       : null;
   const corrected = estimate ? preferGuitarFundamental(estimate) : null;
   const smoothed = pushPitch(engine.smoother, corrected, now);

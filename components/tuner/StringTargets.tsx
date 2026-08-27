@@ -25,7 +25,7 @@ export function StringTargets({
               type="button"
               onClick={() => onSelect?.(s.index)}
               className={cn(
-                "min-w-[3.25rem] rounded-full border px-3 py-2 text-sm tabular",
+                "min-h-11 min-w-[3.25rem] rounded-full border px-3 py-2 text-sm tabular",
                 active
                   ? "border-[var(--foreground)] text-[var(--foreground)]"
                   : "border-[var(--border)] text-[var(--muted-fg)]",

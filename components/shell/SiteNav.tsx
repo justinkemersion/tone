@@ -21,18 +21,19 @@ export function SiteNav({
   const pathname = usePathname();
 
   return (
-    <header className="flex h-12 items-center justify-between gap-3 border-b border-[var(--border)] px-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-4">
+    <header className="flex h-12 items-center justify-between gap-2 border-b border-[var(--border)] px-3 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
         <Link href="/" className="shrink-0 text-sm font-semibold tracking-[0.18em]">
           TONE
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Primary">
+        <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="Primary">
           {links.map((link) => {
             const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "rounded-md px-2 py-1 text-xs sm:text-sm",
                   active

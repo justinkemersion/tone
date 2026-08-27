@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectPitchMpm } from "./pitch/mpm";
+import { detectPitchYin } from "./pitch/yin";
 import { harmonicTone, silence, sineWave, whiteNoise } from "./pitch/signals";
 import { noteToHz } from "./theory";
 import { createSmoother, pushPitch } from "./smoothing";
@@ -18,51 +18,51 @@ function expectNearHz(actual: number | null | undefined, expected: number, cents
   expect(Math.abs(err)).toBeLessThan(cents);
 }
 
-describe("detectPitchMpm", () => {
+describe("detectPitchYin", () => {
   it("returns null for silence", () => {
-    expect(detectPitchMpm(silence(N), SR)).toBeNull();
+    expect(detectPitchYin(silence(N), SR)).toBeNull();
   });
 
   it("returns null for noise", () => {
-    expect(detectPitchMpm(whiteNoise(N, 0.5), SR)).toBeNull();
+    expect(detectPitchYin(whiteNoise(N, 0.5), SR)).toBeNull();
   });
 
   it("detects A440", () => {
-    const r = detectPitchMpm(sineWave(440, SR, N), SR);
+    const r = detectPitchYin(sineWave(440, SR, N), SR);
     expectNearHz(r?.hz, 440, 5);
-    expect(r?.clarity).toBeGreaterThan(0.9);
+    expect(r?.clarity).toBeGreaterThan(0.8);
   });
 
   it("detects standard guitar fundamentals E2–E4", () => {
     for (const note of ["E2", "A2", "D3", "G3", "B3", "E4"] as const) {
       const hz = noteToHz(note);
-      const r = detectPitchMpm(sineWave(hz, SR, N), SR);
+      const r = detectPitchYin(sineWave(hz, SR, N), SR);
       expectNearHz(r?.hz, hz, 10);
     }
   });
 
   it("stays on the fundamental when harmonics are strong (E2)", () => {
     const hz = noteToHz("E2");
-    const r = detectPitchMpm(harmonicTone(hz, SR, N), SR);
+    const r = detectPitchYin(harmonicTone(hz, SR, N), SR);
     expectNearHz(r?.hz, hz, 15);
   });
 
   it("reads a string that is 12 cents flat", () => {
     const target = noteToHz("A2");
     const flat = target * 2 ** (-12 / 1200);
-    const r = detectPitchMpm(sineWave(flat, SR, N), SR);
+    const r = detectPitchYin(sineWave(flat, SR, N), SR);
     expectNearHz(r?.hz, flat, 6);
   });
 
   it("reads a string that is 15 cents sharp", () => {
     const target = noteToHz("G3");
     const sharp = target * 2 ** (15 / 1200);
-    const r = detectPitchMpm(sineWave(sharp, SR, N), SR);
+    const r = detectPitchYin(sineWave(sharp, SR, N), SR);
     expectNearHz(r?.hz, sharp, 6);
   });
 
   it("detects A4 at 432 Hz reference tone frequency (absolute Hz)", () => {
-    const r = detectPitchMpm(sineWave(432, SR, N), SR);
+    const r = detectPitchYin(sineWave(432, SR, N), SR);
     expectNearHz(r?.hz, 432, 6);
   });
 });
@@ -144,6 +144,21 @@ describe("live region", () => {
       amplitude: 0.1,
       stale: false,
     })).toBe("A2 is in tune.");
+  });
+
+  it("stays stable across in-tune cents ticks", () => {
+    const base = {
+      mic: "listening" as const,
+      mode: "guitar" as const,
+      intonation: "in-tune" as const,
+      hz: 110,
+      note: { letter: "A" as const, octave: 2, label: "A2", midi: 45, cents: 0.2, referenceHz: 110 },
+      target: { index: 1, stringNumber: 5, note: "A2", hz: 110, midi: 45, cents: 0.2 },
+      confidence: 0.95,
+      amplitude: 0.1,
+      stale: false,
+    };
+    expect(liveRegionMessage({ ...base, cents: 0.2 })).toBe(liveRegionMessage({ ...base, cents: 4.1 }));
   });
 
   it("maps cents bands", () => {

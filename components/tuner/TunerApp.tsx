@@ -11,7 +11,12 @@ import { useReferenceTone } from "./useReferenceTone";
 import { createTunerEngine, ingestFrame } from "@/lib/tuner/engine";
 import { liveRegionMessage, type MicStatus, type TunerMode, type TunerView } from "@/lib/tuner/state";
 import { resolveOpenStrings, resolvePreset, TUNING_PRESETS } from "@/lib/tuner/presets";
-import { DEFAULT_LOCAL_PREFS, LOCAL_PREFS_KEY, parseLocalPrefs, type LocalPrefs } from "@/lib/tuner/local-prefs";
+import {
+  DEFAULT_LOCAL_PREFS,
+  patchStoredPrefs,
+  readStoredPrefs,
+  type LocalPrefs,
+} from "@/lib/tuner/local-prefs";
 
 const idleView = (mic: MicStatus, mode: TunerMode): TunerView => ({
   mic,
@@ -33,25 +38,26 @@ export function TunerApp({
   initialPrefs?: Partial<LocalPrefs>;
   extraTunings?: TuningOption[];
 }) {
-  const prefs = { ...DEFAULT_LOCAL_PREFS, ...initialPrefs };
+  const prefs = useMemo(
+    () => ({ ...DEFAULT_LOCAL_PREFS, ...initialPrefs }),
+    [initialPrefs],
+  );
   const engineRef = useRef(createTunerEngine({ mode: prefs.mode, referenceHz: prefs.referenceHz }));
   const [tuningId, setTuningId] = useState(prefs.tuningId);
   const [mode, setMode] = useState<TunerMode>(prefs.mode);
   const [view, setView] = useState<TunerView>(() => idleView("idle", prefs.mode));
   const [playing, setPlaying] = useState<number | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LOCAL_PREFS_KEY);
-      if (!raw) return;
-      const parsed = parseLocalPrefs(JSON.parse(raw) as unknown);
-      setTuningId(parsed.tuningId);
-      setMode(parsed.mode);
-      engineRef.current.referenceHz = parsed.referenceHz;
-      engineRef.current.mode = parsed.mode;
-    } catch {
-      /* ignore */
+    const stored = readStoredPrefs();
+    if (stored) {
+      setTuningId(stored.tuningId);
+      setMode(stored.mode);
+      engineRef.current.referenceHz = stored.referenceHz;
+      engineRef.current.mode = stored.mode;
     }
+    setHydrated(true);
   }, []);
   const { start, read } = useMicCapture(
     useCallback((mic: MicStatus) => {
@@ -79,18 +85,16 @@ export function TunerApp({
   }, [mode]);
 
   useEffect(() => {
-    const next: LocalPrefs = {
-      ...prefs,
-      tuningId,
-      mode,
-      referenceHz: engineRef.current.referenceHz,
-    };
-    try {
-      localStorage.setItem(LOCAL_PREFS_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }, [tuningId, mode, prefs]);
+    if (!hydrated) return;
+    patchStoredPrefs(
+      {
+        tuningId,
+        mode,
+        referenceHz: engineRef.current.referenceHz,
+      },
+      prefs,
+    );
+  }, [tuningId, mode, prefs, hydrated]);
 
   useEffect(() => {
     let raf = 0;

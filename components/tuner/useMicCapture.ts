@@ -8,7 +8,7 @@ type AudioHandles = {
   stream: MediaStream;
   source: MediaStreamAudioSourceNode;
   analyser: AnalyserNode;
-  buffer: Float32Array;
+  buffer: Float32Array<ArrayBuffer>;
 };
 
 export function useMicCapture(onStatus: (status: MicStatus) => void) {
@@ -51,7 +51,7 @@ export function useMicCapture(onStatus: (status: MicStatus) => void) {
       analyser.fftSize = 4096;
       analyser.smoothingTimeConstant = 0;
       source.connect(analyser);
-      const buffer = new Float32Array(analyser.fftSize);
+      const buffer = new Float32Array(new ArrayBuffer(analyser.fftSize * 4));
       handles.current = { context, stream, source, analyser, buffer };
       onStatus("listening");
       return handles.current;

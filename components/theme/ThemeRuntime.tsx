@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import type { ThemePreference } from "@/lib/types/tone";
+import { readStoredPrefs } from "@/lib/tuner/local-prefs";
 
-function applyTheme(theme: ThemePreference) {
+export function applyTheme(theme: ThemePreference) {
   const dark =
     theme === "dark" ||
     (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -12,8 +13,10 @@ function applyTheme(theme: ThemePreference) {
 
 export function ThemeRuntime({ theme }: { theme: ThemePreference }) {
   useEffect(() => {
-    applyTheme(theme);
-    if (theme !== "system") return;
+    const stored = readStoredPrefs();
+    const resolved = stored?.theme ?? theme;
+    applyTheme(resolved);
+    if (resolved !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => applyTheme("system");
     mq.addEventListener("change", onChange);

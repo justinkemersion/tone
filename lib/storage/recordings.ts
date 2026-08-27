@@ -38,7 +38,8 @@ export function describeRecordingsStatus(): {
   };
 }
 
-export function uploadRecording(_input: RecordingUpload): never {
+export function uploadRecording(input: RecordingUpload): never {
+  void input;
   assertRecordingsAvailable();
   throw new UserFacingError(
     "Recording upload is not implemented yet. R2 env is reserved; nothing was saved.",

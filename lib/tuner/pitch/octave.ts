@@ -1,8 +1,8 @@
 import { DETECT_MIN_HZ } from "../constants";
-import type { PitchEstimate } from "./mpm";
+import type { PitchEstimate } from "./yin";
 
 /**
- * If MPM still locks a harmonic on a thick string, prefer one octave down
+ * If YIN still locks a harmonic on a thick string, prefer one octave down
  * when the halved frequency stays in range. Only applied below ~250 Hz.
  */
 export function preferGuitarFundamental(

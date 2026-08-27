@@ -42,6 +42,7 @@ export function TuningBar({
             key={m}
             type="button"
             onClick={() => onMode(m)}
+            aria-pressed={mode === m}
             className={cn(
               "rounded px-2 py-1 capitalize",
               mode === m ? "bg-[var(--muted)]" : "text-[var(--muted-fg)]",

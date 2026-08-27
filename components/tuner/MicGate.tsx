@@ -12,14 +12,16 @@ export function MicGate({
 }) {
   if (mic === "listening" || mic === "requesting") return null;
   const label =
-    mic === "permission-denied"
-      ? "Try microphone again"
-      : mic === "init-failed"
-        ? "Retry audio"
-        : "Allow microphone";
+    mic === "idle"
+      ? "Allow microphone"
+      : mic === "permission-denied"
+        ? "Try microphone again"
+        : mic === "unavailable"
+          ? "Try again"
+          : "Retry audio";
   return (
     <div className="flex justify-center">
-      <Button type="button" onClick={onStart}>
+      <Button type="button" onClick={onStart} className="min-h-11 min-w-[11rem]">
         {label}
       </Button>
     </div>

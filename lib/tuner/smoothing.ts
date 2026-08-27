@@ -1,6 +1,6 @@
 import { FREQ_EMA_ALPHA, NOTE_HYSTERESIS_CENTS, STALE_MS } from "./constants";
 import { centsBetween } from "./theory";
-import type { PitchEstimate } from "./pitch/mpm";
+import type { PitchEstimate } from "./pitch/yin";
 
 export type SmoothedPitch = {
   hz: number;

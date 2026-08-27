@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { savePreferencesAction } from "@/app/(dashboard)/actions/preferences";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { LOCAL_PREFS_KEY, type LocalPrefs } from "@/lib/tuner/local-prefs";
+import { readStoredPrefs, writeStoredPrefs, type LocalPrefs } from "@/lib/tuner/local-prefs";
 import type { TunerMode } from "@/lib/tuner/state";
 import type { ThemePreference } from "@/lib/types/tone";
+import { applyTheme } from "@/components/theme/ThemeRuntime";
 
 export function SettingsForm({
   prefs,
@@ -21,6 +22,14 @@ export function SettingsForm({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
+  const [formPrefs, setFormPrefs] = useState(prefs);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const stored = readStoredPrefs();
+    if (stored) setFormPrefs(stored);
+    setHydrated(true);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,11 +40,8 @@ export function SettingsForm({
       mode: (String(fd.get("mode")) as TunerMode) === "chromatic" ? "chromatic" : "guitar",
       theme: String(fd.get("theme")) as ThemePreference,
     };
-    try {
-      localStorage.setItem(LOCAL_PREFS_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
+    writeStoredPrefs(next);
+    applyTheme(next.theme);
     if (canPersist) {
       const result = await savePreferencesAction({
         reference_hz: next.referenceHz,
@@ -55,7 +61,7 @@ export function SettingsForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form key={hydrated ? "local" : "server"} onSubmit={onSubmit} className="space-y-4">
       <label className="block text-xs font-medium">
         Reference (A4 Hz)
         <Input
@@ -64,7 +70,7 @@ export function SettingsForm({
           min={390}
           max={480}
           step={0.1}
-          defaultValue={prefs.referenceHz}
+          defaultValue={formPrefs.referenceHz}
           className="mt-1"
         />
       </label>
@@ -72,7 +78,7 @@ export function SettingsForm({
         Default tuning
         <select
           name="tuningId"
-          defaultValue={prefs.tuningId}
+          defaultValue={formPrefs.tuningId}
           className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
         >
           {tunings.map((t) => (
@@ -86,7 +92,7 @@ export function SettingsForm({
         Mode
         <select
           name="mode"
-          defaultValue={prefs.mode}
+          defaultValue={formPrefs.mode}
           className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
         >
           <option value="guitar">Guitar</option>
@@ -97,7 +103,7 @@ export function SettingsForm({
         Theme
         <select
           name="theme"
-          defaultValue={prefs.theme}
+          defaultValue={formPrefs.theme}
           className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
         >
           <option value="system">System</option>
