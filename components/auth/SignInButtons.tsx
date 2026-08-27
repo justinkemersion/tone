@@ -8,7 +8,8 @@ export function SignInButtons({ providers }: { providers: AuthProviderId[] }) {
   if (providers.length === 0) {
     return (
       <p className="text-sm text-[var(--muted-fg)]">
-        No OAuth providers configured. Set AUTH_GITHUB_* or AUTH_GOOGLE_* in .env
+        Sign-in is not configured. Set AUTH_GITHUB_ID / AUTH_GITHUB_SECRET and/or AUTH_GOOGLE_ID /
+        AUTH_GOOGLE_SECRET. You can still tune without an account.
       </p>
     );
   }

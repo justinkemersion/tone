@@ -25,6 +25,8 @@ Do **not** run `flux push sql/migrations/0001_foo.sql` without `--mode versioned
 3. `0004_core_entities.sql`
 4. `0005_core_grants.sql`
 5. `0006_child_record_ownership.sql`
+6. `0007_tone_entities.sql` (preferences, custom tunings, favorites, recording metadata)
+7. `0008_tone_grants.sql`
 
 ## PostgREST profile
 

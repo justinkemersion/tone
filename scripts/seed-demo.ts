@@ -1,11 +1,13 @@
 /**
- * Seed demo data for DEMO_USER_SUB (OAuth provider account id).
+ * Seed demo Tone data for DEMO_USER_SUB (OAuth provider account id).
  * Requires FLUX_URL, FLUX_GATEWAY_JWT_SECRET, DEMO_USER_SUB in env.
+ * Does not run without Flux — it will not fake success.
  */
-import { createNote } from "../lib/flux/notes";
-import { createRecord, addTag } from "../lib/flux/records";
-import { logActivity } from "../lib/flux/activity";
 import { upsertProfile } from "../lib/flux/profiles";
+import { upsertPreferences } from "../lib/flux/preferences";
+import { createCustomTuning } from "../lib/flux/custom-tunings";
+import { addFavorite } from "../lib/flux/favorites";
+import { logActivity } from "../lib/flux/activity";
 import { loadEnvFiles } from "./lib/load-env";
 
 loadEnvFiles(process.cwd());
@@ -25,35 +27,27 @@ async function main() {
     process.exit(1);
   }
 
-  await upsertProfile(sub, { display_name: "Demo User" });
-
-  const r1 = await createRecord(sub, {
-    title: "Onboarding checklist",
-    description: "First generic record",
-    status: "active",
+  await upsertProfile(sub, { display_name: "Tone Demo" });
+  await upsertPreferences(sub, {
+    reference_hz: 440,
+    default_tuning_id: "standard",
+    tuner_mode: "guitar",
+    theme: "dark",
   });
-  await createRecord(sub, {
-    title: "Archive me later",
-    description: "Draft record for workflow demo",
-    status: "draft",
+  const custom = await createCustomTuning(sub, {
+    name: "Practice Drop D",
+    notes: ["D2", "A2", "D3", "G3", "B3", "E4"],
   });
-
-  await addTag(sub, r1.id, "ops");
-  await addTag(sub, r1.id, "demo");
-
-  await createNote(sub, {
-    record_id: r1.id,
-    body: "## Welcome\n\nMarkdown notes work here.",
-  });
-
+  await addFavorite(sub, { presetId: "standard" });
+  await addFavorite(sub, { customTuningId: custom.id });
   await logActivity(sub, {
     entity_type: "seed",
-    entity_id: "demo",
+    entity_id: "tone-demo",
     action: "seeded",
-    metadata: { records: 2 },
+    metadata: { tunings: 1 },
   });
 
-  console.log("Seeded demo data for", sub);
+  console.log("Seeded Tone demo data for", sub);
 }
 
 main().catch((e) => {

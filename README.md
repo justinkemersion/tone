@@ -1,91 +1,71 @@
-# flux-app-foundry
+# Tone
 
-A disciplined Flux-first CRUDe application system for contract-driven, anti-drift development with Cursor.
+Open the site. Allow the microphone. Play a guitar string. Tune.
 
-**Status:** 0.1 foundation · 0.2 repeatable setup · 0.3 observable architecture · 0.4 fork-proven · 0.5 baseline lifecycle · **0.6 reference compatibility harness**.
+Tone is a Foundry (Flux) application. `/` is the tuner and works without an account. Sign-in is optional and only unlocks saved tunings and preferences.
 
-Machine baseline: [`foundry.baseline.json`](foundry.baseline.json) · ownership: [`docs/adr/001-baseline-ownership.md`](docs/adr/001-baseline-ownership.md) · agents: [`AGENTS.md`](AGENTS.md) · reference: [`docs/REFERENCE_APP.md`](docs/REFERENCE_APP.md) · baseline notes: [`docs/BASELINE_CHANGELOG.md`](docs/BASELINE_CHANGELOG.md).
-
-## Stack
-
-- Next.js App Router, React, TypeScript (strict), Tailwind CSS
-- Auth.js v5 (GitHub and/or Google — whichever env vars are set)
-- Flux / PostgREST / PostgreSQL with RLS-first schema
-- pnpm, Vitest, GitHub Actions CI
-
-## Quick start
+## First run
 
 ```bash
 pnpm install
-cp .env.example .env
-# Set AUTH_SECRET, at least one OAuth provider, FLUX_URL, FLUX_GATEWAY_JWT_SECRET
-pnpm foundry:doctor
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign in, then use `/dashboard`.
+Open [http://localhost:3000](http://localhost:3000). Microphone access needs a secure context (`localhost` or HTTPS).
 
-## Flux setup
+No Flux, OAuth, or R2 credentials are required to tune.
 
-Create the Flux project **before** domain SQL. Full guide: [`docs/FLUX_WORKFLOW.md`](docs/FLUX_WORKFLOW.md).
+## What it does
+
+- Continuous pitch detection in the browser (McLeod Pitch Method / NSDF, not zero-crossing)
+- 12-TET math with a configurable A4 (default 440 Hz)
+- Guitar mode (nearest open string) and chromatic mode
+- Built-in presets: Standard, Drop D, D Standard, Drop C, Open G, Open D, DADGAD
+- Flat / nearly / in-tune / sharp, with cents and a positional needle
+- Optional reference tone on a string (detection is muted while it plays)
+- Dark and light themes
+
+## Persistence (optional)
+
+When Justin has linked a Flux project and OAuth:
+
+- Preferences (reference Hz, default tuning, theme, mode)
+- Custom tunings and favorites
+
+RLS: `jwt.sub = user_id`. All Flux HTTP goes through `lib/flux` on the server.
+
+Recordings/R2: env contract and an honest unavailable page only. Cloud save is never faked.
+
+## Foundry
+
+This repo is a Foundry fork of [`flux-app-foundry`](https://github.com/justinkemersion/flux-app-foundry). See `FOUNDRY_BASELINE.md`, `_contract/`, and `docs/FIRST_FORK.md`.
+
+Until `flux init` is run, `flux.json` hash stays `REPLACE_AFTER_FLUX_INIT`. That is intentional. Exact remaining secrets: [`docs/SECRETS.md`](docs/SECRETS.md). Resume notes: [`PROGRESS.md`](PROGRESS.md).
 
 ```bash
-flux login
-flux init                    # or link — 7-char hash in flux.json (from flux list)
-flux push sql/migrations/      # versioned ledger (directory push)
-pnpm flux:schema:sync          # FLUX_POSTGREST_SCHEMA → .env.local (control-plane apiSchema)
-pnpm flux:doctor               # control plane + gateway bridge probes
+pnpm lint
+pnpm typecheck
+pnpm exec vitest run
+pnpm check:drift
+pnpm build
+pnpm foundry:status
+pnpm foundry:compat
+# After .env + Flux:
+pnpm flux:doctor
+pnpm foundry:doctor
+pnpm foundry:verify
 ```
 
-See [`sql/migrations/README.md`](sql/migrations/README.md).
+`foundry:new-app-check` / live doctors fail honestly until Flux and OAuth exist. Do not stub them green.
 
-## Scripts
+## Layout
 
-| Command | Purpose |
-|---------|---------|
-| `pnpm foundry:report` | Architecture reports + generated route/component inventories |
-| `pnpm flux:doctor` | Flux control plane, schema sync, gateway bridge probes |
-| `pnpm foundry:doctor` | App env, OAuth, SQL hygiene, **local baseline/security**, + Flux checks when `FLUX_URL` is set |
-| `pnpm foundry:status` | Non-destructive baseline drift report (current/behind/customized/missing_security/unknown) |
-| `pnpm foundry:verify:template` | CI / fresh clone: lint, typecheck, test, drift, fork check, status, build — **no `.env`** |
-| `pnpm foundry:golden-app` | Materialize a temp app and validate generated output + status fixtures |
-| `pnpm foundry:compat` | Canonical reference-app compatibility harness (local; `--live` opt-in) |
-| `pnpm foundry:reference:verify` | Alias for `foundry:compat` |
-| `pnpm foundry:verify` | Full gate with your `.env`: run `foundry:doctor` first on forks |
-| `pnpm foundry:new-app-check` | Fork readiness (baseline manifest, contracts, flux hash) |
-| `pnpm foundry:baseline:stamp` | Maintainer: refresh fingerprints + source.commit (Foundry upstream only) |
-| `pnpm flux:schema:sync` | Write `FLUX_POSTGREST_SCHEMA` to `.env.local` from control plane |
-| `pnpm deps:check` / `pnpm deps:audit` | Dependency maintenance |
-| `pnpm seed:demo` | Seed sample data (`DEMO_USER_SUB` required) |
+| Path | Role |
+|------|------|
+| `/` | Public tuner |
+| `/tunings` | Presets + custom tunings (auth to persist) |
+| `/settings` | Reference, theme, default tuning |
+| `/login` | Auth.js (GitHub/Google when configured) |
+| `/recordings` | Honest R2-unavailable state |
 
-## Forking
-
-See [`docs/FIRST_FORK.md`](docs/FIRST_FORK.md) and [`_contract/forking.md`](_contract/forking.md).
-
-Track lineage in `foundry.baseline.json` + `FOUNDRY_BASELINE.md` and pins in `_drift/dependency-exceptions.md`.
-
-## Cursor workflow
-
-1. Read `_contract/` (start with [`_contract/robust-workflow.md`](_contract/robust-workflow.md)) and the active `plans/NNN-*.md`
-2. Use `prompts/` templates for repeatable tasks
-3. **Deploy code via git only** — [`_contract/deploy.md`](_contract/deploy.md); no rsync/scp shims
-4. Template repo: `pnpm foundry:verify:template`. Fork with `.env`: `pnpm flux:doctor`, `pnpm foundry:doctor`, then `pnpm foundry:verify`
-
-## Philosophy
-
-Essays in [`docs/philosophy/`](docs/philosophy/) describe the methodology (AI-assisted, anti-drift, Flux-first, boring CRUD).
-
-## Repository layout
-
-- `_contract/` — enforceable laws (`robust-workflow.md`, `deploy.md`, `dependency-policy.md`, `forking.md`, …)
-- `fixtures/reference-app/` — canonical compatibility canary (not a second product app)
-- `docs/generated/` — inventories from `foundry:report` (gitignored; see README there)
-- `_drift/` — fork exception log
-- `lib/config/` — typed env + Flux schema helpers
-- `plans/` — phased execution checklists
-- `lib/flux/` — single Flux HTTP boundary
-- `sql/migrations/` — RLS-first schema (unqualified names)
-
-## Identity
-
-`session.user.id` is the OAuth provider account id. It becomes the JWT `sub` and all `user_id` columns. Flux is never called from the browser.
+Pitch math lives in `lib/tuner/`. Do not put Flux credentials in client code.
