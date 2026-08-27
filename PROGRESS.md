@@ -66,4 +66,16 @@ After layout fixes: `pnpm lint`, `typecheck`, `vitest run` (119), and template-e
 - Do not put `NEXT_PUBLIC_FLUX_*` anywhere
 - Do not re-stamp `foundry.baseline.json`
 - Homepage must stay public; `(dashboard)` stays fail-closed
-- Next human work: `flux init` + OAuth + optional R2 from `docs/SECRETS.md`; optional visual QA
+- Next human work: `flux init` + OAuth + optional R2 from `docs/SECRETS.md`; ship via `docs/DEPLOY.md` (`./deploy/bootstrap-server.sh` then `./deploy/relaunch.sh`). Do not SSH from this agent.
+
+## Deploy (git-identical to Static)
+
+Production: **https://tone.vsl-base.com**. Checkout `/srv/apps/tone`. Runtime env `/srv/apps/tone/.env.docker`. Host `root@178.104.205.138` (`TONE_DEPLOY_HOST`).
+
+- `GET /health` → `{ ok: true, service: "tone" }` (public, not under `app/api`)
+- Docker: `node:22-bookworm-slim`, pnpm@10.33.0, standalone image, Traefik `Host(\`tone.vsl-base.com\`)` on `flux-network`
+- `pnpm build` (turbopack) produces `.next/standalone` — Dockerfile uses the same `pnpm build` as Static
+- Flux/OAuth/R2 stay empty in `deploy/env.docker.example`; tuner boots; login/persistence fail closed
+- `flux.json` hash remains `REPLACE_AFTER_FLUX_INIT`. `foundry.baseline.json` not re-stamped
+- Do not merge this PR from the agent. Do not SSH to production from this environment.
+

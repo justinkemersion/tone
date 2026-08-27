@@ -24,6 +24,7 @@ Forked from **flux-app-foundry** into this repository (`justinkemersion/tone`) i
 - Domain Flux helpers added under `lib/flux/` (`preferences.ts`, `custom-tunings.ts`, `favorites.ts`). Existing Foundry fingerprints still match (`pnpm foundry:status` → `current`); new files are app domain wrappers calling `fluxJson`.
 - Optional R2 env contract for later recordings. Cloud save is never faked.
 - PWA manifest + service worker cache the tuner shell. Auth/Flux/R2 are not claimed to work offline.
+- Git-deploy kit mirrors Static (`docs/DEPLOY.md`, `deploy/*`, Dockerfile, docker-compose): https://tone.vsl-base.com, checkout `/srv/apps/tone`, Traefik on `flux-network`. No Cloudflare Pages/Vercel.
 
 ## Remaining Justin env (exact)
 

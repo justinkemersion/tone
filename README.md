@@ -66,6 +66,11 @@ pnpm foundry:verify
 | `/tunings` | Presets + custom tunings (auth to persist) |
 | `/settings` | Reference, theme, default tuning |
 | `/login` | Auth.js (GitHub/Google when configured) |
-| `/recordings` | Honest R2-unavailable state |
+| `/health` | Public `{ ok: true, service: "tone" }` |
 
 Pitch math lives in `lib/tuner/`. Do not put Flux credentials in client code.
+
+## Deploy
+
+Git is source of truth. Production: **https://tone.vsl-base.com**. See [`docs/DEPLOY.md`](docs/DEPLOY.md). Do not rsync source trees; secrets-only rsync of `deploy/.env.docker` is allowed.
+

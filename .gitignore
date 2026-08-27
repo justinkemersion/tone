@@ -34,6 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Production secrets and local deploy env (never commit)
+deploy/.env.docker
+.env.docker
+
 # local plans and agent artifacts (not committed)
 .local/
 
