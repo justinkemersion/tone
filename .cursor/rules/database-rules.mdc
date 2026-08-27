@@ -1,0 +1,13 @@
+---
+description: SQL and RLS rules
+globs: sql/**/*
+alwaysApply: false
+---
+
+Follow `_contract/database.md`.
+
+## RLS invariant
+
+`(current_setting('request.jwt.claims', true)::json->>'sub') = user_id`
+
+Every table needs policies + grants. Use numbered migrations.

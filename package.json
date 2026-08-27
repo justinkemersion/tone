@@ -2,21 +2,55 @@
   "name": "tone",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest",
-    "test:run": "vitest run"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && pnpm check:drift",
+    "check:file-sizes": "node scripts/check-file-sizes.mjs",
+    "check:imports": "node scripts/check-import-boundaries.mjs",
+    "check:contracts": "node scripts/validate-contracts.mjs",
+    "check:sql": "node scripts/check-sql-placeholders.mjs",
+    "check:graph": "node scripts/check-graph.mjs",
+    "check:drift": "pnpm check:file-sizes && pnpm check:imports && pnpm check:contracts && pnpm check:sql && pnpm check:graph",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "format": "prettier --write .",
+    "deps:check": "pnpm outdated",
+    "deps:audit": "pnpm audit",
+    "deps:update:minor": "pnpm update --latest --interactive",
+    "deps:report": "node scripts/deps-report.mjs",
+    "foundry:report": "tsx scripts/foundry-report.ts",
+    "foundry:doctor": "tsx scripts/foundry-doctor.ts",
+    "foundry:status": "tsx scripts/foundry-status.ts",
+    "foundry:baseline:stamp": "tsx scripts/foundry-baseline-stamp.ts",
+    "foundry:new-app-check": "tsx scripts/foundry-new-app-check.ts",
+    "foundry:golden-app": "tsx scripts/foundry-golden-app.ts",
+    "foundry:compat": "tsx scripts/foundry-compat.ts",
+    "foundry:reference:verify": "tsx scripts/foundry-compat.ts",
+    "foundry:verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:drift && pnpm build",
+    "foundry:verify:template": "tsx scripts/foundry-verify-template.ts",
+    "flux:schema:sync": "tsx scripts/flux-schema-sync.ts",
+    "flux:doctor": "tsx scripts/flux-doctor.ts"
   },
   "dependencies": {
-    "framer-motion": "^12.38.0",
-    "next": "16.2.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "jose": "^6.2.3",
+    "next": "15.5.18",
+    "next-auth": "5.0.0-beta.31",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
+    "undici": "^8.10.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -24,14 +58,21 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/eslint-plugin": "^1.6.13",
+    "@vitejs/plugin-react": "^6.0.2",
+    "dependency-cruiser": "^17.4.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
-    "globals": "^17.4.0",
-    "jsdom": "^29.0.1",
+    "eslint-config-next": "15.5.18",
+    "happy-dom": "^20.9.0",
+    "madge": "^8.0.0",
+    "prettier": "^3.8.3",
     "tailwindcss": "^4",
+    "tsx": "^4.22.0",
     "typescript": "^5",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.10"
+    }
   }
 }

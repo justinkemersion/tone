@@ -1,154 +1,76 @@
 # Tone
 
-**Tone** is a browser-based **guitar tuner** for everyday practice: **Listen** mode analyzes your playing from the mic, and **Reference** mode plays steady **open-string** pitches from the preset you choose. Both paths read the **same tuning data**, so detected notes and reference tones always agree.
+Open the site. Allow the microphone. Play a guitar string. Tune.
 
----
+Tone is a Foundry (Flux) application. `/` is the tuner and works without an account. Sign-in is optional and only unlocks saved tunings and preferences.
 
-## Where this project is going
-
-Tone started as a focused foundation—a **`useTuner`** hook (Web Audio + autocorrelation), configuration-driven tunings, and a simple meter. It has grown into a **dual-mode** instrument UI:
-
-1. **Core audio** — Mic analysis and a **triangle-wave** reference generator with **gain envelopes** (no clicks), single active reference tone, **Mute all** to stop everything.
-2. **Modern UI** — Dark zinc layout, glass-style panels, **SVG arc** meter (with an in-tune glow), **Framer Motion** for mode and layout transitions, responsive **bento-style** string grid.
-3. **Preset system** — Tunings are **typed data** (`TuningPreset` with optional **subtitle** for artist/context). The **PresetSelector** groups presets by **category**, supports **search**, and **favorites** persisted in **`localStorage`**.
-4. **Expanded library** — Beyond standard/drop/open shapes, the catalog now includes **song-oriented** presets (alternate and “ostrich”-style tunings) for real repertoire, while staying at **A4 = 440 Hz** and **12-TET** unless you change the code.
-
-The app **opens in Reference mode** by default; Listen uses autocorrelation with a **subharmonic guard** so thick strings are less likely to read an octave high (harmonic lock).
-
-The direction is still **configuration-first**: new tunings are added in data, and Hz are derived in one place (`resolveOpenStrings` → `noteToHz`) so Listen and Reference never drift.
-
----
-
-## Features
-
-| Area | What you get |
-|------|----------------|
-| **Listen** | `AnalyserNode` + autocorrelation, chromatic note + **Hz**, **cents** vs equal temperament, spring-animated arc. |
-| **Reference** | Tap a string for a looping reference pitch; switching string or preset **fades** the previous tone. |
-| **Presets** | Categorized library (see below); search; **heart** favorites; active preset highlighted in the picker and on the main card (name + muted subtitle). |
-| **Mute all** | Stops the mic path and closes the reference output context after a short fade. |
-
----
-
-## Tuning presets (overview)
-
-All open-string pitches are **scientific notation** at **A4 = 440 Hz** (equal temperament). Per-string **Hz** are computed—not hand-pasted—so they stay consistent.
-
-### Standard & half-step
-
-- **Standard** — E A D G B E  
-- **E♭ standard** — Half step down from standard  
-- **D standard** — Whole step down from standard  
-
-### Drop
-
-- **Drop D**, **Drop C**, **Drop B**
-
-### Open / modal
-
-- **Open G**, **Open D**, **DADGAD**
-
-### Song (with subtitles in the app)
-
-| Preset | Notes |
-|--------|--------|
-| **Pink Moon** | Nick Drake — C G C F C E |
-| **California** | Joni Mitchell — open E (E B E G♯ B E) |
-| **Big Yellow Taxi** | Joni Mitchell — same open E; many players use open D + capo 2 (noted in UI) |
-| **The Rain Song** | Led Zeppelin — DADGAD |
-| **Holocene** | Bon Iver — open B♭ (B♭ F B♭ D F B♭) |
-| **Venus in Furs** | The Velvet Underground — “ostrich” (D D D D D D at successive octaves) |
-| **Schizophrenia** | Sonic Youth — F♯ F♯ B B C♯ C♯ |
-| **Skinny Love** | Bon Iver — open C variant (C G C G C E; differs from Pink Moon on the 4th string) |
-
-*Song tunings are for reference and practice; recordings may use capos or slightly different concert pitch.*
-
----
-
-## Tech stack
-
-- [Next.js](https://nextjs.org) (App Router) + TypeScript  
-- [Tailwind CSS](https://tailwindcss.com) v4  
-- [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)  
-- [Framer Motion](https://www.framer.com/motion/)  
-
----
-
-## Getting started
+## First run
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). **Microphone access** needs a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS or `localhost`).
+Open [http://localhost:3000](http://localhost:3000). Microphone access needs a secure context (`localhost` or HTTPS).
+
+No Flux, OAuth, or R2 credentials are required to tune.
+
+## What it does
+
+- Continuous pitch detection in the browser (YIN, not zero-crossing)
+- 12-TET math with a configurable A4 (default 440 Hz)
+- Guitar mode (nearest open string) and chromatic mode
+- Built-in presets: Standard, Drop D, D Standard, Drop C, Open G, Open D, DADGAD
+- Flat / nearly / in-tune / sharp, with cents and a positional needle
+- Optional reference tone on a string (detection is muted while it plays)
+- Dark and light themes
+
+## Persistence (optional)
+
+When Justin has linked a Flux project and OAuth:
+
+- Preferences (reference Hz, default tuning, theme, mode)
+- Custom tunings and favorites
+
+RLS: `jwt.sub = user_id`. All Flux HTTP goes through `lib/flux` on the server.
+
+Recordings/R2: env contract and an honest unavailable page only. Cloud save is never faked.
+
+## Foundry
+
+This repo is a Foundry fork of [`flux-app-foundry`](https://github.com/justinkemersion/flux-app-foundry). See `FOUNDRY_BASELINE.md`, `_contract/`, and `docs/FIRST_FORK.md`.
+
+Until `flux init` is run, `flux.json` hash stays `REPLACE_AFTER_FLUX_INIT`. That is intentional. Exact remaining secrets: [`docs/SECRETS.md`](docs/SECRETS.md). Resume notes: [`PROGRESS.md`](PROGRESS.md).
 
 ```bash
-npm run build   # production build
-npm run start   # production server
-npm run lint    # ESLint
-npm test           # Vitest (watch)
-npm run test:run   # Vitest once (CI-friendly)
+pnpm lint
+pnpm typecheck
+pnpm exec vitest run
+pnpm check:drift
+pnpm build
+pnpm foundry:status
+pnpm foundry:compat
+# After .env + Flux:
+pnpm flux:doctor
+pnpm foundry:doctor
+pnpm foundry:verify
 ```
 
----
+`foundry:new-app-check` / `foundry:verify:template` / live doctors fail honestly until Flux and OAuth exist. Do not stub them green. Exact remaining secrets: [`docs/SECRETS.md`](docs/SECRETS.md). Recorded command results: [`PROGRESS.md`](PROGRESS.md).
 
-## Tests (Vitest + Testing Library)
-
-Automated tests live next to source as `*.test.ts` / `*.test.tsx`. **`npm run test:run`** executes the full suite.
-
-### Covered today
-
-| Area | What it checks |
-|------|----------------|
-| **`lib/audio/note-utils`** | Note parsing (incl. flats), `midiToHz` / `noteToHz`, cents, chromatic pitch mapping |
-| **`lib/audio/pitch-detection`** | `AutocorrPitchDetector`: short/silent buffers → `null`; synthetic sines ~440 Hz and ~82 Hz |
-| **`lib/tuning/tuning-engine`** | Open-string targets, string indices (6 → 1), custom reference Hz |
-| **`lib/tuning/tunings`** | `getTuningById`, `DEFAULT_TUNING_ID`, search filter, category grouping |
-| **`lib/tuning/tuning-library`** | `resolveOpenStrings`, `REFERENCE_A4_HZ` |
-| **`useFavoriteTunings`** | `localStorage` hydration, toggle + persist, corrupt JSON ignored |
-| **`useTunerContext`** | Throws if used outside `TunerProvider` |
-| **`ModeToggle`** | Tab clicks invoke `onChange` with the right mode |
-| **`StringGrid`** | String tap in Reference mode; disabled / no handler in Listen mode |
-
-Framer Motion is stubbed in `vitest.setup.ts` so component tests stay deterministic.
-
-### Not covered yet (TODO)
-
-- [ ] **`useTuner`** — mic stream, `AnalyserNode` loop, integration with pitch detector (needs `getUserMedia` / `AudioContext` mocks or a thin test harness).
-- [ ] **`useReferenceTone`** — oscillator output, envelopes, suspend/dispose (Web Audio mocks).
-- [ ] **`TunerProvider` / `TunerContext`** — mode transitions, reference cycle timing, `muteAll` wiring (mock child hooks and assert orchestration).
-- [ ] **`PresetSelector` / `TunerApp`** — search, favorites UI, responsive sheet (optional Playwright or heavier RTL).
-- [ ] **E2E** — real browser smoke on iOS Safari / Chrome (mic permission, safe areas).
-
----
-
-## Project layout (high level)
+## Layout
 
 | Path | Role |
 |------|------|
-| `src/hooks/useTuner.ts` | Mic capture, analyser loop, pitch → note + cents |
-| `src/hooks/useReferenceTone.ts` | Reference oscillator, envelopes, single-voice policy |
-| `src/hooks/useFavoriteTunings.ts` | Favorite preset IDs in `localStorage` |
-| `src/lib/tuning/tunings.ts` | **`TUNING_PRESETS`** — all presets, categories, search/group helpers |
-| `src/lib/tuning/tuning-library.ts` | **`REFERENCE_A4_HZ`**, re-exports, **`resolveOpenStrings`** → Hz |
-| `src/context/TunerContext.tsx` | Listen / Reference mode, preset id, favorites API, mute |
-| `src/components/tuner/` | `TunerApp`, `PresetSelector`, `StringGrid`, `TunerArc`, `ModeToggle`, … |
+| `/` | Public tuner |
+| `/tunings` | Presets + custom tunings (auth to persist) |
+| `/settings` | Reference, theme, default tuning |
+| `/login` | Auth.js (GitHub/Google when configured) |
+| `/health` | Public `{ ok: true, service: "tone" }` |
 
----
+Pitch math lives in `lib/tuner/`. Do not put Flux credentials in client code.
 
-## TODO / ideas
+## Deploy
 
-- [ ] **User-defined tunings** — UI to add/edit presets (or import JSON) without editing `tunings.ts`; optional capo field as a hint only.  
-- [ ] **Alternate pitch algorithms** — MPM or YIN behind a `PitchDetector` interface; compare stability on low strings.  
-- [ ] **A4 / concert pitch** — Slider wired to `REFERENCE_A4_HZ` for both detection and reference.  
-- [ ] **Per-string lock** — In Listen mode, bias cents toward the **active preset’s** open-string targets.  
-- [ ] **Other instruments** — Bass / ukulele string sets using the same `TuningPreset` shape.  
-- [ ] **Input level meter** — RMS from the time-domain buffer.  
-- [ ] **PWA** — Installable, phone-on-stand workflow.  
-- [ ] **Accessibility** — Arc semantics, reduced-motion variants for Framer.  
-- [ ] **More tests** — See **Tests** section above for gaps (`useTuner`, `useReferenceTone`, full context, E2E).  
+Git is source of truth. Production: **https://tone.vsl-base.com**. See [`docs/DEPLOY.md`](docs/DEPLOY.md). Do not rsync source trees; secrets-only rsync of `deploy/.env.docker` is allowed.
 
----
-
-Bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).

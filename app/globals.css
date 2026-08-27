@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f3eee4;
+  --foreground: #1a1814;
+  --surface: #fffaf1;
+  --muted: #e6dfd0;
+  --muted-fg: #6d675c;
+  --border: #d3cbb8;
+  --accent: #2f2b26;
+  --accent-fg: #f7f1e6;
+  --in-tune: #1f7a52;
+  --flat: #3b6ea8;
+  --sharp: #b56b1c;
+  --needle: #1a1814;
+  --track: #d9d1be;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0d0f12;
+  --foreground: #ece6d8;
+  --surface: #161a1f;
+  --muted: #22272e;
+  --muted-fg: #8f887a;
+  --border: #2c333c;
+  --accent: #d7c4a3;
+  --accent-fg: #16130e;
+  --in-tune: #5ad39a;
+  --flat: #7aa7d9;
+  --sharp: #e0a45a;
+  --needle: #ece6d8;
+  --track: #2a3139;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
