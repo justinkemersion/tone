@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   centsBetween,
   formatCents,
+  formatHz,
   hzToChromaticPitch,
   midiToHz,
   noteToHz,
@@ -75,5 +76,12 @@ describe("12-TET", () => {
     expect(formatCents(0)).toBe("0¢");
     expect(formatCents(12.4)).toBe("+12¢");
     expect(formatCents(-3.2)).toBe("-3¢");
+  });
+
+  it("formats frequency without fake precision", () => {
+    expect(formatHz(82.4069)).toBe("82.41 Hz");
+    expect(formatHz(110)).toBe("110.0 Hz");
+    expect(formatHz(440.2)).toBe("440.2 Hz");
+    expect(formatHz(1200.4)).toBe("1200 Hz");
   });
 });

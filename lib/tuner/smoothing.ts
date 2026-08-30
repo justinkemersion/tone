@@ -38,7 +38,8 @@ export function pushPitch(
 
   const jump = Math.abs(centsBetween(estimate.hz, prev.hz));
   if (jump > NOTE_HYSTERESIS_CENTS && estimate.clarity < prev.clarity + 0.04) {
-    state.current = { ...prev, updatedAt: now };
+    // Keep the last note, but do not refresh updatedAt. A weak wrong pitch
+    // must not keep a stale reading alive past STALE_MS.
     return state.current;
   }
 

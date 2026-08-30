@@ -1,81 +1,70 @@
-# PROGRESS — Tone Foundry rebuild
+# PROGRESS — Tone
 
 Another agent can resume from this file.
 
-## Status (2026-08-27)
+## Status (2026-08-30)
 
-**Rebuild shipped on `cursor/foundry-rebuild-7e17`.** PR: https://github.com/justinkemersion/tone/pull/1
+**This pass:** usable tuner lifecycle + honest pitch hold + quieter homepage, on `cursor/agent-operational-guidelines-2c2e`.
 
-Foundry overlay + Tone domain are in the tree. `/` is a public guitar tuner. Auth/Flux/R2 are contracts with honest unavailable states. Live Flux and OAuth secrets are **not** present in this environment.
+**Before this pass** (main @ `9c7b3ae`, Foundry rebuild PR https://github.com/justinkemersion/tone/pull/1): `/` was already a public YIN tuner with guitar/chromatic presets, needle, cents, and optional reference tones. Mic start existed, but there was no stop/retry while listening, no tab/background handling, no unsupported-browser status, and a weak jump could keep a stale note alive. Homepage showed an account teaser. `:root` painted light before theme JS.
 
-**Visual pass (2026-08-27 follow-up):** Headless Chrome screenshots at 375 / 768 / 1280, dark and light, for `/` `/tunings` `/settings` `/login`, plus `/recordings` once (1280 dark). **1440 not captured.** Files: `/opt/cursor/artifacts/screenshots/`. Layout fixes from that pass: six strings stay on one row at 375; tighter tuner stack on mobile; Tuner nav link hidden below `sm` (TONE still goes home); extra bottom padding on `/tunings`.
+## What changed this pass
 
-## Overlay
+- Mic capability/error/permission helpers in `lib/tuner/mic.ts` (testable). `useMicCapture` now classifies insecure/unsupported browsers, resumes AudioContext when the tab returns, suspends while hidden, and treats a dead track as “no microphone.”
+- Start / stop / retry: Allow → Waiting → Stop; Escape stops. Prior mic grant autostarts (Permissions API only; Safari without it still needs a tap).
+- Pitch hold: rejected harmonic jumps no longer refresh `updatedAt`. Last note can be **held** briefly, then clears. Reference playback and a hidden tab clear the readout so we do not show a stale frequency. Hz is hidden while held.
+- Readout: note + octave, cents direction (“Tune up · -12¢”), in-tune color on the note/needle, larger tuning/mode targets. Tuning picker hidden in chromatic mode.
+- Dark is the CSS first paint; light remains an explicit `data-theme="light"`. Removed the homepage “Tuning works without an account” teaser.
+- Tests: 136 (was 119). RTL cleanup added in `vitest.setup.ts`.
+
+## Overlay (unchanged)
 
 - Upstream: `justinkemersion/flux-app-foundry` @ `1abbc5507d7d1c8ee71279577e7fdf11f0a3850e`
-- Stamped baseline: `foundry.baseline.json` `0.6.1` / `e818c6e` (not re-stamped)
-- `pnpm foundry:status` → `current` (84/84). Extra `lib/flux/{preferences,custom-tunings,favorites}.ts` do not break fingerprints.
+- Stamped baseline: `foundry.baseline.json` `0.6.1` / `e818c6e` (**not** re-stamped)
+- `pnpm foundry:status` → `current` (84/84)
 
-## Product
-
-- `/` public tuner: YIN CMNDF + 12-TET (default A440) + Standard guitar strings
-- Guitar + chromatic; presets Standard / Drop D / D Standard / Drop C / Open G / Open D / DADGAD
-- Distinct mic/pitch states; positional needle; cents; live region without cents spam
-- Optional reference tone (detection muted while it plays)
-- `/tunings` presets + custom CRUD (auth + Flux)
-- `/settings` always local; Flux upsert when signed in
-- `/recordings` honest R2-unavailable; upload never reports success
-- Theme: localStorage `tone-prefs-v1` is merged, not overwritten by the tuner
-- PWA shell cache; auth/Flux/R2 not claimed offline
-
-## Remaining Justin env
-
-Exact list: `docs/SECRETS.md`. `flux.json` hash is still `REPLACE_AFTER_FLUX_INIT`. Do not invent a hash.
-
-## Validation recorded (commit `e5d8fdd` + docs pass)
+## Validation (this pass)
 
 | Command | Result |
 |---------|--------|
 | `pnpm lint` | pass |
 | `pnpm typecheck` | pass |
-| `pnpm exec vitest run` | **119** tests, 21 files, pass |
-| `pnpm check:drift` | pass (file-sizes, imports, contracts, SQL placeholders, graph) |
+| `pnpm exec vitest run` | **136** tests, 23 files, pass |
+| `pnpm check:drift` | pass |
 | `pnpm build` (template CI stubs) | pass |
 | `pnpm foundry:status` | `current` 84/84, 6/6 security invariants |
 | `pnpm foundry:compat` | local pass; live probes skipped/pending |
-| `pnpm foundry:verify:template` | **fails honestly** at `foundry:new-app-check` (`flux.json` hash `REPLACE_AFTER_FLUX_INIT`) after lint/typecheck/test/drift already passed |
-| `pnpm foundry:doctor` | **fails honestly** — no `.env`; hash placeholder; missing `AUTH_SECRET` / `FLUX_URL` / `FLUX_GATEWAY_JWT_SECRET` |
-| `pnpm flux:doctor` | **fails honestly** — hash placeholder, no login, no `FLUX_URL` |
-| `pnpm foundry:new-app-check` | **fails honestly** — flux.json hash not configured |
+| `pnpm foundry:doctor` / `flux:doctor` / `foundry:verify:template` | **not stubbed green** — still fail honestly without Justin Flux/OAuth |
 
-HTTP against `http://localhost:3000` (dev, `AUTH_SECRET` stub only):
+HTTP against `http://localhost:3000` (production `pnpm start`, AUTH stub only):
 
 | Path | Result |
 |------|--------|
-| `/` `/tunings` `/settings` `/recordings` `/login` `/manifest.webmanifest` | **200** |
-| `/dashboard` | **307** → `/login` (fail-closed; unauthenticated) |
+| `/` `/tunings` `/settings` `/login` `/health` | **200** (`/health` → `{ ok: true, service: "tone" }`) |
+| `/dashboard` | **307** → `/login` |
 
-**Not captured:** 1440; `/recordings` at 375/768 or light; live microphone (permission not granted in this environment). Next.js dev “N” overlay appears in screenshots; it is not product UI.
+Browser (Chrome + interactive pass): 375 and ~1280. First-use is Allow microphone → play a string. Clicking Allow here → “No microphone” + Try again (no capture device). Drop D updates the lowest string to D2. Chromatic hides string buttons and (after this pass) the tuning picker. Light theme from Settings is readable. Tab reaches Allow/Try again; Escape does not crash. **Live pitch / in-tune with a real guitar was not exercised** — this environment has no microphone.
 
-After layout fixes: `pnpm lint`, `typecheck`, `vitest run` (119), and template-env `pnpm build` passed. `flux.json` hash untouched.
+## Remaining risks
+
+- iOS Safari Permissions API is missing; autostart will not run there until the user taps Allow (correct).
+- No live guitar signal in this environment; YIN/smoothing are unit-tested with synthetic buffers only.
+- `flux.json` hash is still `REPLACE_AFTER_FLUX_INIT`. Do not invent one.
+
+## Next best tranche
+
+1. Real-device pass: phone + desktop with a guitar — confirm hold length, harmonic lock, and iOS interrupt/resume.
+2. Justin env: `flux init` + OAuth (+ optional R2) from `docs/SECRETS.md`. Then `pnpm flux:doctor` / `foundry:doctor` can be honest-green.
+3. Ship via `docs/DEPLOY.md`. Do not SSH from this agent. Do not merge to `main` unless Justin asks.
 
 ## Resume notes
 
-- Tuner math: `lib/tuner/` (theory, presets, `pitch/yin.ts`, engine, smoothing, state)
-- Do not resurrect MPM; it octave-errored on guitar harmonics in tests
+- Tuner math: `lib/tuner/` (theory, presets, `pitch/yin.ts`, engine, smoothing, `mic.ts`, state)
+- Do not resurrect MPM
 - Do not put `NEXT_PUBLIC_FLUX_*` anywhere
 - Do not re-stamp `foundry.baseline.json`
-- Homepage must stay public; `(dashboard)` stays fail-closed
-- Next human work: `flux init` + OAuth + optional R2 from `docs/SECRETS.md`; ship via `docs/DEPLOY.md` (`./deploy/bootstrap-server.sh` then `./deploy/relaunch.sh`). Do not SSH from this agent.
+- Homepage must stay public and tuner-focused; `(dashboard)` stays fail-closed
 
-## Deploy (git-identical to Static)
+## Deploy
 
-Production: **https://tone.vsl-base.com**. Checkout `/srv/apps/tone`. Runtime env `/srv/apps/tone/.env.docker`. Host `root@178.104.205.138` (`TONE_DEPLOY_HOST`).
-
-- `GET /health` → `{ ok: true, service: "tone" }` (public, not under `app/api`)
-- Docker: `node:22-bookworm-slim`, pnpm@10.33.0, standalone image, Traefik `Host(\`tone.vsl-base.com\`)` on `flux-network`
-- `pnpm build` (turbopack) produces `.next/standalone` — Dockerfile uses the same `pnpm build` as Static
-- Flux/OAuth/R2 stay empty in `deploy/env.docker.example`; tuner boots; login/persistence fail closed
-- `flux.json` hash remains `REPLACE_AFTER_FLUX_INIT`. `foundry.baseline.json` not re-stamped
-- Do not merge this PR from the agent. Do not SSH to production from this environment.
-
+Production: **https://tone.vsl-base.com**. See `docs/DEPLOY.md`. Flux/OAuth/R2 stay empty until Justin adds them; the tuner must still boot.
