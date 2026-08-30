@@ -22,21 +22,23 @@ export function TuningBar({
   const list = options.length ? options : TUNING_PRESETS;
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-      <label className="flex items-center gap-2 text-xs text-[var(--muted-fg)]">
-        Tuning
-        <select
-          className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-sm text-[var(--foreground)]"
-          value={selectedId}
-          onChange={(e) => onSelect(e.target.value)}
-        >
-          {list.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex rounded-md border border-[var(--border)] p-0.5 text-xs">
+      {mode === "guitar" ? (
+        <label className="flex items-center gap-2 text-sm text-[var(--muted-fg)]">
+          Tuning
+          <select
+            className="min-h-11 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]"
+            value={selectedId}
+            onChange={(e) => onSelect(e.target.value)}
+          >
+            {list.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      <div className="flex rounded-md border border-[var(--border)] p-0.5 text-sm">
         {(["guitar", "chromatic"] as const).map((m) => (
           <button
             key={m}
@@ -44,8 +46,8 @@ export function TuningBar({
             onClick={() => onMode(m)}
             aria-pressed={mode === m}
             className={cn(
-              "rounded px-2 py-1 capitalize",
-              mode === m ? "bg-[var(--muted)]" : "text-[var(--muted-fg)]",
+              "min-h-11 rounded px-3 capitalize",
+              mode === m ? "bg-[var(--muted)] text-[var(--foreground)]" : "text-[var(--muted-fg)]",
             )}
           >
             {m}

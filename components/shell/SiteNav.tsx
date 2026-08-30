@@ -61,9 +61,7 @@ export function SiteNav({
           <Link href="/login" className="text-[var(--muted-fg)] hover:text-[var(--foreground)]">
             Sign in
           </Link>
-        ) : (
-          <span className="hidden text-[var(--muted-fg)] sm:inline">Tuning works without an account</span>
-        )}
+        ) : null}
       </div>
     </header>
   );

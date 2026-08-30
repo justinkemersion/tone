@@ -4,7 +4,13 @@ import { hzToChromaticPitch } from "./theory";
 import { resolveOpenStrings, type TuningPreset } from "./presets";
 import { nearestOpenString } from "./targets";
 import { createSmoother, isStale, pushPitch, type SmootherState } from "./smoothing";
-import { intonationFromCents, type MicStatus, type TunerMode, type TunerView } from "./state";
+import {
+  emptyTunerView,
+  intonationFromCents,
+  type MicStatus,
+  type TunerMode,
+  type TunerView,
+} from "./state";
 
 export type TunerEngine = {
   smoother: SmootherState;
@@ -34,14 +40,22 @@ export function ingestFrame(
   now: number,
   preset: TuningPreset,
 ): TunerView {
-  const estimate =
-    engine.mic === "listening" && !engine.muted
-      ? detectPitchYin(buffer, sampleRate)
-      : null;
+  if (engine.mic !== "listening") {
+    engine.smoother.current = null;
+    return emptyTunerView(engine.mic, engine.mode);
+  }
+
+  if (engine.muted) {
+    engine.smoother.current = null;
+    return emptyTunerView("listening", engine.mode);
+  }
+
+  const estimate = detectPitchYin(buffer, sampleRate);
   const corrected = estimate ? preferGuitarFundamental(estimate) : null;
   const smoothed = pushPitch(engine.smoother, corrected, now);
   const stale = isStale(engine.smoother, now);
   const live = smoothed && !stale ? smoothed : null;
+  const held = Boolean(live && !corrected);
 
   const note = live ? hzToChromaticPitch(live.hz, engine.referenceHz) : null;
   const strings = resolveOpenStrings(preset.notes, engine.referenceHz);
@@ -59,6 +73,7 @@ export function ingestFrame(
     target,
     confidence: live?.clarity ?? 0,
     amplitude: live?.rms ?? 0,
-    stale: engine.mic === "listening" && !live,
+    stale: !live,
+    held,
   };
 }

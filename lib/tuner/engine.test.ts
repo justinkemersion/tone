@@ -81,6 +81,20 @@ describe("smoothing", () => {
     const next = pushPitch(s, { hz: 146.8, clarity: 0.86, rms: 0.1 }, 16);
     expect(next?.hz).toBeCloseTo(110, 0);
   });
+
+  it("does not let a rejected jump extend the hold window", () => {
+    const s = createSmoother();
+    pushPitch(s, { hz: 110, clarity: 0.96, rms: 0.1 }, 0);
+    pushPitch(s, { hz: 146.8, clarity: 0.86, rms: 0.1 }, 16);
+    expect(pushPitch(s, null, 400)).toBeNull();
+  });
+
+  it("accepts a stronger jump onto a new note", () => {
+    const s = createSmoother();
+    pushPitch(s, { hz: 110, clarity: 0.9, rms: 0.1 }, 0);
+    const next = pushPitch(s, { hz: 146.83, clarity: 0.97, rms: 0.1 }, 16);
+    expect(next?.hz).toBeCloseTo(146.83, 1);
+  });
 });
 
 describe("engine + intonation", () => {
@@ -121,6 +135,45 @@ describe("engine + intonation", () => {
     const view = ingestFrame(engine, sineWave(440, SR, N), SR, 0, resolvePreset("standard"));
     expect(view.hz).toBeNull();
   });
+
+  it("clears a live pitch immediately when muted", () => {
+    const engine = createTunerEngine();
+    engine.mic = "listening";
+    const preset = resolvePreset("standard");
+    ingestFrame(engine, sineWave(noteToHz("A2"), SR, N), SR, 0, preset);
+    engine.muted = true;
+    const muted = ingestFrame(engine, sineWave(noteToHz("A2"), SR, N), SR, 50, preset);
+    expect(muted.hz).toBeNull();
+    expect(muted.held).toBe(false);
+    expect(muted.stale).toBe(true);
+  });
+
+  it("holds briefly through silence, then clears", () => {
+    const engine = createTunerEngine();
+    engine.mic = "listening";
+    const preset = resolvePreset("standard");
+    const live = ingestFrame(engine, sineWave(noteToHz("A2"), SR, N), SR, 0, preset);
+    expect(live.held).toBe(false);
+    expect(live.target?.note).toBe("A2");
+    const held = ingestFrame(engine, silence(N), SR, 80, preset);
+    expect(held.held).toBe(true);
+    expect(held.hz).toBeCloseTo(noteToHz("A2"), 0);
+    const gone = ingestFrame(engine, silence(N), SR, 400, preset);
+    expect(gone.stale).toBe(true);
+    expect(gone.hz).toBeNull();
+    expect(gone.held).toBe(false);
+  });
+
+  it("does not keep a previous reading when the mic is not listening", () => {
+    const engine = createTunerEngine();
+    engine.mic = "listening";
+    const preset = resolvePreset("standard");
+    ingestFrame(engine, sineWave(noteToHz("A2"), SR, N), SR, 0, preset);
+    engine.mic = "idle";
+    const idle = ingestFrame(engine, sineWave(noteToHz("A2"), SR, N), SR, 16, preset);
+    expect(idle.hz).toBeNull();
+    expect(idle.stale).toBe(false);
+  });
 });
 
 describe("live region", () => {
@@ -143,6 +196,7 @@ describe("live region", () => {
       confidence: 0.95,
       amplitude: 0.1,
       stale: false,
+      held: false,
     })).toBe("A2 is in tune.");
   });
 
@@ -157,8 +211,18 @@ describe("live region", () => {
       confidence: 0.95,
       amplitude: 0.1,
       stale: false,
+      held: false,
     };
     expect(liveRegionMessage({ ...base, cents: 0.2 })).toBe(liveRegionMessage({ ...base, cents: 4.1 }));
+    expect(liveRegionMessage({ ...base, cents: 0.2, held: true })).toBe("A2 is in tune.");
+    expect(liveRegionMessage({
+      ...base,
+      mic: "unsupported",
+      intonation: "none",
+      hz: null,
+      cents: null,
+      stale: false,
+    })).toBe("Microphone needs a supported browser on HTTPS or localhost.");
   });
 
   it("maps cents bands", () => {

@@ -8,6 +8,7 @@ export type MicStatus =
   | "listening"
   | "permission-denied"
   | "unavailable"
+  | "unsupported"
   | "init-failed";
 
 export type TunerMode = "guitar" | "chromatic";
@@ -25,7 +26,25 @@ export type TunerView = {
   confidence: number;
   amplitude: number;
   stale: boolean;
+  /** Last stable pitch is shown after the signal dropped, not a fresh frame. */
+  held: boolean;
 };
+
+export function emptyTunerView(mic: MicStatus, mode: TunerMode): TunerView {
+  return {
+    mic,
+    mode,
+    intonation: "none",
+    hz: null,
+    cents: null,
+    note: null,
+    target: null,
+    confidence: 0,
+    amplitude: 0,
+    stale: mic === "listening",
+    held: false,
+  };
+}
 
 export function intonationFromCents(cents: number | null): Intonation {
   if (cents == null || !Number.isFinite(cents)) return "none";
@@ -40,6 +59,9 @@ export function liveRegionMessage(view: TunerView): string {
   if (view.mic === "requesting") return "Waiting for microphone permission.";
   if (view.mic === "permission-denied") return "Microphone permission denied.";
   if (view.mic === "unavailable") return "No microphone available.";
+  if (view.mic === "unsupported") {
+    return "Microphone needs a supported browser on HTTPS or localhost.";
+  }
   if (view.mic === "init-failed") return "Audio could not start.";
   if (view.stale || view.intonation === "none") return "Listening. Play a string.";
   const label = view.mode === "guitar" && view.target ? view.target.note : view.note?.label;
@@ -48,4 +70,19 @@ export function liveRegionMessage(view: TunerView): string {
   if (view.intonation === "nearly") return `${label} is nearly in tune.`;
   if (view.intonation === "flat") return `${label} is flat.`;
   return `${label} is sharp.`;
+}
+
+export function sameTunerView(a: TunerView, b: TunerView): boolean {
+  return (
+    a.mic === b.mic &&
+    a.mode === b.mode &&
+    a.intonation === b.intonation &&
+    a.stale === b.stale &&
+    a.held === b.held &&
+    a.hz === b.hz &&
+    a.cents === b.cents &&
+    a.note?.label === b.note?.label &&
+    a.target?.index === b.target?.index &&
+    a.target?.note === b.target?.note
+  );
 }
